@@ -63,7 +63,7 @@ These guys are all total ballers, and I enourage you to check out their sites, b
 ### The Vercel Performance Expert
 The Vercel Performance subagent references ~/.claude/skills/react-best-practices/rules/ — this is a separate Vercel skill, not part of this repo. If you don't have it installed, the Vercel subagent will fail gracefully (no recommendations returned), and the other eight experts will work fine. The review and plan will note "Vercel — no findings" in the breakdown, which is accurate if slightly misleading.
 
-If you want the full nine-expert experience, install the Vercel React Best Practices skill separately. If you don't care about Next.js performance auditing, ignore this entirely — the council works without it.
+If you want the full nine-expert experience, install the [Vercel React Best Practices](https://github.com/vercel-labs/agent-skills) skill separately. If you don't care about Next.js performance auditing, ignore this entirely — the council works without it.
 
 
 ## Installation
