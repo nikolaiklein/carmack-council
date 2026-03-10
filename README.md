@@ -18,7 +18,7 @@ The council is chaired by John Carmack's engineering philosophy: simplicity over
 
 3. **Council Implement** — Executes the plan task by task. Loads each expert's reference document before implementing their task. Verifies (type check, lint, test) after every task. Produces an implementation log.
 
-4. **Council Review** — Eight domain experts independently review the code in parallel, each in their own context window. The Chair merges, deduplicates, and prioritises into P1/P2/P3 findings. Automated checks (tsc, lint, vitest, cypress) run first.
+4. **Council Review** — Nine domain experts independently review the code in parallel, each in their own context window. The Chair merges, deduplicates, and prioritises into P1/P2/P3 findings. Automated checks (tsc, lint, vitest, cypress) run first.
 
 ## The Council
 
@@ -35,7 +35,7 @@ The council is chaired by John Carmack's engineering philosophy: simplicity over
 | Vitaly Friedman | UX Quality | `quality-ux.md` |
 | Kent Beck | Test Quality | `quality-testing.md` |
 
-Not every expert participates in every skill. The plan uses all nine. The review uses eight (no Fowler — his domain is planning, not review). The implementer loads the relevant expert per task.
+Not every expert participates in every skill. The plan and review use all nine (plus Vercel Performance as a tenth). The implementer loads the relevant expert per task. Willison (LLM Pipeline) only participates in the plan — most code reviews don't involve LLM pipelines.
 
 ## Installation
 
@@ -43,7 +43,7 @@ Not every expert participates in every skill. The plan uses all nine. The review
 
 Download individual `.skill` packages from the [`dist/`](dist/) directory:
 
-- [`council-review.skill`](dist/council-review.skill) — Code review with eight parallel experts
+- [`council-review.skill`](dist/council-review.skill) — Code review with nine parallel experts
 - [`council-plan.skill`](dist/council-plan.skill) — Feature planning with nine parallel experts
 - [`council-implement.skill`](dist/council-implement.skill) — Plan execution with expert-guided implementation
 - [`spec-writer.skill`](dist/spec-writer.skill) — Structured specification generation

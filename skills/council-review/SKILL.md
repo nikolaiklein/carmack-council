@@ -1,6 +1,6 @@
 ---
 name: council-review
-description: Perform a rigorous Carmack Council code review. Use when explicitly asked to review code, do a "council review", "carmack review", or invoke /council-review. Carmack's philosophy chairs a council of domain experts — Troy Hunt (security), Kent C. Dodds (frontend), Matteo Collina (Node.js), Brandur Leach (Postgres), Vercel Performance, Karri Saarinen (UI quality), Vitaly Friedman (UX quality), Kent Beck (test quality). Uses parallel subagents — one per council member — for deep, independent review. Produces prioritised P1/P2/P3 findings. Stack: Next.js App Router / React / TypeScript / tRPC / Prisma / Neon / Clerk. B2B SaaS.
+description: Perform a rigorous Carmack Council code review. Use when explicitly asked to review code, do a "council review", "carmack review", or invoke /council-review. Carmack's philosophy chairs a council of domain experts — Troy Hunt (security), Martin Fowler (refactoring), Kent C. Dodds (frontend), Matteo Collina (Node.js), Brandur Leach (Postgres), Vercel Performance, Karri Saarinen (UI quality), Vitaly Friedman (UX quality), Kent Beck (test quality). Uses parallel subagents for deep, independent review. Produces prioritised P1/P2/P3 findings. Stack: Next.js App Router / React / TypeScript / tRPC / Prisma / Neon / Clerk. B2B SaaS.
 ---
 
 # Carmack Council Reviewer
@@ -147,6 +147,7 @@ Using the Grep results from Phase 1, categorise every file in scope into one or 
 **Vercel (Performance):** [pages, layouts, components with data fetching, route handlers, loading/error boundaries]
 **Saarinen (UI Quality):** [components, pages, layouts, CSS Modules, any file with visual output]
 **Friedman (UX Quality):** [pages, layouts, forms, modals, empty states, error boundaries, loading states, navigation components]
+**Fowler (Refactoring):** [module boundary files, barrel exports, shared utilities, files with complex abstractions, files touched by multiple other modules, dependency-heavy files]
 **Beck (Test Quality):** [test files (*.test.ts, *.test.tsx, *.cy.ts), the source files they test, test config (vitest.config.ts, cypress.config.ts), test utilities and fixtures]
 ```
 
@@ -167,14 +168,14 @@ After writing the context brief to disk, the Phase 1 exploration work (Glob resu
 
 ### Dispatch rules
 
-Spawn **one subagent per council member** using the `Task` tool. All eight run in parallel. Each subagent receives:
+Spawn **one subagent per council member** using the `Task` tool. All nine run in parallel. Each subagent receives:
 - A pointer to the context brief file (they read it themselves)
 - Their domain-specific file list (NOT the full file list)
 - A pointer to their reference document (they read it themselves)
 - An instruction to write findings to their output file
 - An instruction to return ONLY a one-line summary to the parent
 
-**You MUST spawn all eight.** If a council member's domain has no files (e.g., no Prisma files, no test files), spawn them anyway — they will confirm "No findings in my domain" which proves coverage.
+**You MUST spawn all nine.** If a council member's domain has no files (e.g., no Prisma files, no test files), spawn them anyway — they will confirm "No findings in my domain" which proves coverage.
 
 **CRITICAL — NO CODE IN ANY SUBAGENT OUTPUT.** Every subagent prompt includes "No code" in the finding format. Subagents must not return code snippets, schema blocks, type definitions, config examples, or inline code. If a subagent writes code in their output file, strip it during synthesis.
 
@@ -461,13 +462,48 @@ IMPORTANT — OUTPUT INSTRUCTIONS:
 Do NOT return your full findings to the parent. The file is your deliverable.
 ```
 
+### Subagent 9: Martin Fowler (Refactoring / Structure)
+
+**Task prompt:**
+```
+You are Martin Fowler reviewing code for structural quality. You are part of a Carmack Council code review.
+
+SETUP: Read the context brief at .council/review-output/$TIMESTAMP/context-brief.md
+Then read your reference document at: references/refactoring.md
+
+YOUR FILES TO REVIEW (read ALL of these):
+[list ONLY Fowler's domain files from the assignment]
+
+Review for structural issues using the principles in your reference document. Focus on: module boundaries and cohesion, unnecessary abstraction layers, premature generality, duplicated knowledge (not just duplicated code), coupling between modules that should be independent, barrel export sprawl, files doing too many things, naming that obscures intent, and structural debt that will compound as the codebase grows. Apply the economic test: only flag structural issues that will cost real time in the next few months, not theoretical purity concerns.
+
+Report findings in this exact format:
+
+FINDING:
+- Title: [short descriptive title]
+- File: [path:line-range]
+- Principle: [principle name and number from refactoring.md]
+- Severity: [P1/P2/P3 using these criteria: P1=structural issue causing bugs or blocking feature work; P2=structural debt that compounds — will cost significantly more to fix later than now; P3=clarity and organisation improvements that reduce cognitive load]
+- What's wrong: [1-2 sentences. Specific to THIS codebase.]
+- Consequence: [1 sentence. What concrete cost this creates.]
+- Fix: [1-2 sentences. What to change and where. NO code snippets.]
+
+If no structural findings exist, write: "No structural findings. [1 sentence explaining why the code structure is clean.]"
+
+Do not include code snippets, type definitions, or config examples. Describe everything in plain English. Stay in your lane — only flag structural and design quality issues. Do not flag security (Hunt's domain), performance (Vercel's domain), or visual/UX concerns (Saarinen/Friedman's domain).
+
+IMPORTANT — OUTPUT INSTRUCTIONS:
+1. Write your complete findings to .council/review-output/$TIMESTAMP/fowler.md
+2. Return ONLY this single line to the parent: "Findings written to .council/review-output/$TIMESTAMP/fowler.md — N findings (breakdown by severity)"
+Do NOT return your full findings to the parent. The file is your deliverable.
+```
+
 ---
 
 ## Phase 4: Merge and Deduplicate
 
-### Pre-synthesis gate: confirm all eight output files exist
+### Pre-synthesis gate: confirm all nine output files exist
 
-Before synthesising, read ALL eight output files:
+Before synthesising, read ALL nine output files:
 
 1. `.council/review-output/$TIMESTAMP/hunt.md`
 2. `.council/review-output/$TIMESTAMP/dodds.md`
@@ -477,18 +513,21 @@ Before synthesising, read ALL eight output files:
 6. `.council/review-output/$TIMESTAMP/saarinen.md`
 7. `.council/review-output/$TIMESTAMP/friedman.md`
 8. `.council/review-output/$TIMESTAMP/beck.md`
+9. `.council/review-output/$TIMESTAMP/fowler.md`
 
-**Count them.** If any file is missing or empty — whether due to a subagent failure, context compaction, or any other reason — **re-dispatch that subagent before proceeding.** Do not synthesise with partial results. Do not say "sufficient for synthesis" with 5 out of 8. Every subagent was dispatched for a reason. Wait for all eight, re-dispatch if needed, then synthesise once.
+**Count them.** If any file is missing or empty — whether due to a subagent failure, context compaction, or any other reason — **re-dispatch that subagent before proceeding.** Do not synthesise with partial results. Do not say "sufficient for synthesis" with 5 out of 9. Every subagent was dispatched for a reason. Wait for all nine, re-dispatch if needed, then synthesise once.
 
 ### Synthesis
 
-Once all eight output files are confirmed present and complete:
+Once all nine output files are confirmed present and complete:
 
-1. **Collect all findings** from all eight files.
+1. **Collect all findings** from all nine files.
 2. **Deduplicate** — If two experts flag the same issue, keep the PRIMARY domain's finding and note the cross-reference. The primary domain is whichever reference doc has the more specific fix. Specific overlap rules:
    - **Saarinen vs Dodds:** Saarinen takes priority for visual/design concerns (hierarchy, spacing, typography). Dodds takes priority for architectural concerns (component structure, state management, rendering patterns).
    - **Friedman vs Dodds:** Friedman takes priority for UX flow concerns (screen states, progressive disclosure, error recovery). Dodds takes priority for implementation quality (hook patterns, effect management, accessibility attributes).
    - **Friedman vs Saarinen:** Friedman owns information architecture and interaction patterns. Saarinen owns visual execution of those patterns. Keep both if they describe genuinely different problems.
+   - **Fowler vs Collina:** Fowler takes priority for module boundary and abstraction concerns. Collina takes priority for async correctness, error handling, and tRPC procedure design. If both flag the same file, Fowler owns the structural argument and Collina owns the runtime behaviour argument.
+   - **Fowler vs Dodds:** Fowler takes priority for cross-module structural concerns (coupling, cohesion, dependency direction). Dodds takes priority for component-level architecture (state management, hook patterns, rendering strategy).
    - **Beck vs all others:** Beck reviews test quality only. If Beck flags that a function has no tests and another expert flags a bug in that function, keep both — they're complementary findings, not duplicates.
 3. **Resolve severity conflicts** — If two experts disagree on severity for the same pattern, the Chair decides based on: "what's the concrete cost in THIS codebase at THIS scale?"
 4. **Apply the Carmack filter** to every finding:
@@ -587,6 +626,7 @@ Use this exact format. Structure and attribution are non-negotiable — every fi
 | Vercel (Performance) | [N] | [N] | [N] | [N] | [1-2 words per main area] |
 | Saarinen (UI Quality) | [N] | [N] | [N] | [N] | [1-2 words per main area] |
 | Friedman (UX Quality) | [N] | [N] | [N] | [N] | [1-2 words per main area] |
+| Fowler (Refactoring) | [N] | [N] | [N] | [N] | [1-2 words per main area] |
 | Beck (Test Quality) | [N] | [N] | [N] | [N] | [1-2 words per main area] |
 | **TOTAL** | **[N]** | **[N]** | **[N]** | **[N]** | |
 
@@ -601,6 +641,7 @@ Use this exact format. Structure and attribution are non-negotiable — every fi
 - Saarinen: `.council/review-output/$TIMESTAMP/saarinen.md`
 - Friedman: `.council/review-output/$TIMESTAMP/friedman.md`
 - Beck: `.council/review-output/$TIMESTAMP/beck.md`
+- Fowler: `.council/review-output/$TIMESTAMP/fowler.md`
 ```
 
 **Attribution rules:**
