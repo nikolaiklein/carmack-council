@@ -253,7 +253,7 @@ Every schema change acquires a lock. The question is: which lock, and for how lo
 ### What to check
 
 **Not using the connection pooler**
-- Neon's `-pooler` hostname runs PgBouncer in transaction mode, supporting up to 10,000 concurrent client connections. Without it, you're limited to Postgres `max_connections` (104 on the smallest compute). At ~4k users, connection exhaustion without the pooler is guaranteed.
+- Neon's `-pooler` hostname runs PgBouncer in transaction mode, supporting up to 10,000 concurrent client connections. Without it, you're limited to Postgres `max_connections` (104 on the smallest compute). At any meaningful scale, connection exhaustion without the pooler is guaranteed.
 - Prisma CLI and migrations must use the direct (non-pooled) connection. Application code uses the pooled connection.
 - Severity: **P1** for application code connecting directly to Neon without the pooler.
 
@@ -265,7 +265,7 @@ Every schema change acquires a lock. The question is: which lock, and for how lo
 **Timeouts not configured for cold starts**
 - Neon auto-suspends idle computes after 5 minutes by default. Activation takes 500ms to a few seconds. Prisma's default `connect_timeout` (5s) may be exceeded, producing `P1001: Can't reach database server`.
 - Fix: `?connect_timeout=15&pool_timeout=15` in the connection string.
-- Severity: **P2** — affects first requests after idle periods. At ~4k users the database likely stays active during business hours.
+- Severity: **P2** — affects first requests after idle periods. At moderate scale the database likely stays active during business hours.
 
 **Session-level features through the pooler**
 - Neon's PgBouncer runs in transaction mode. Session-level features don't work: `SET`, `LISTEN/NOTIFY`, temporary tables, `WITH HOLD CURSOR`, and session-level advisory locks (`pg_advisory_lock`).
@@ -314,7 +314,7 @@ Every `prisma migrate dev` output must be reviewed before deployment. Run `--cre
 - **Security patterns**: SQL injection, access control, IDOR, secrets. Covered by **security.md (Hunt)**.
 - **Backend error handling**: Prisma error leakage through tRPC, error formatting, retry logic. Covered by **quality-backend.md (Collina)**.
 - **Performance tuning**: `EXPLAIN ANALYZE`, index type selection (B-tree, GIN, GiST), partitioning, VACUUM tuning, query planner statistics. This is a correctness doc, not a DBA guide.
-- **Enterprise scale**: Read replicas, sharding, multi-region, logical replication. At ~4k users, premature.
+- **Enterprise scale**: Read replicas, sharding, multi-region, logical replication. At early stage, premature.
 - **Postgres administration**: `pg_stat_statements`, backup strategies, user/role management, `pg_repack`. Out of scope for code review.
 - **ORM comparisons**: The ORM is Prisma. The doc works with it, not against it.
 

@@ -20,7 +20,7 @@ The opinionated stack:
 - **CSS Modules + BEM** — no Tailwind. Never suggest Tailwind alternatives.
 - **TypeScript strict mode** — the type system is the first line of defence.
 
-B2B SaaS at ~4k users. Scale concerns (sharding, read replicas, multi-region) are premature. tRPC replaces REST — the type bridge IS the contract.
+B2B SaaS at early stage. Scale concerns (sharding, read replicas, multi-region) are premature. tRPC replaces REST — the type bridge IS the contract.
 
 ---
 

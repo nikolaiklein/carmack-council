@@ -236,7 +236,7 @@ Both converge on inevitability of failure — and the asymmetry between building
 
 **No confidence indicators**
 - Friedman teaches "consensus meters" as a pattern for showing agreement/disagreement levels across sources. For AI-generated analysis, some outputs are higher-confidence than others. If the system treats all recommendations as equally certain, users can't calibrate their trust. Showing confidence levels (even simple high/medium/low) helps users weigh recommendations appropriately.
-- Severity: **P3** for missing confidence indicators. **P2** if the product positions itself on analytical rigor (as TestKarma does).
+- Severity: **P3** for missing confidence indicators. **P2** if the product positions itself on analytical rigor.
 
 **AI-generated content indistinguishable from curated content**
 - Friedman explicitly teaches "how to signal and label AI-generated content, and make it work with human-written, curated content." If the interface mixes AI-generated analysis with human-curated frameworks or static content, users need to know which is which. Not because AI content is inherently less trustworthy — but because the user's evaluation strategy differs.
@@ -296,85 +296,3 @@ Before writing any finding, apply the Friedman-Carmack synthesis:
 5. **Does the user know why?** If AI recommendations lack evidence, controls are disabled without explanation, or data appears without context, flag it. (Both: the system must communicate what it's doing and why.)
 6. **Is the interface honest about uncertainty?** If AI output is presented with false confidence, or data freshness/quality is obscured, flag it. (Both: epistemic honesty is non-negotiable.)
 
----
-
-## Appendix: TestKarma App Structure
-
-Reference this to skip the exploration phase during audits. Last updated: 2026-02-22.
-
-### Routes
-
-```
-/                           → Sign-in (Clerk, hash routing)
-/dashboard                  → Saved analyses list (DashboardPageClient)
-/dashboard/[id]             → Analysis detail + add-to-board (AnalysisWithBoard)
-/dashboard/board            → Kanban board, 5 active columns (BoardShell)
-/dashboard/context          → Company context statements + material upload (CompanyContextPage)
-/dashboard/results          → Completed experiments list (ResultsList)
-/dashboard/results/[id]     → Result detail: outcome, metrics, follow-ups (FollowUpSection)
-```
-
-### Layouts
-
-- `app/layout.tsx` — Root: ClerkProvider, fonts (Inter + JetBrains Mono), globals.css
-- `app/dashboard/layout.tsx` — Dashboard shell: TRPCProvider, DashboardTopBar (4 tabs), Toast
-
-### Navigation
-
-DashboardTopBar renders 4 tabs: **Context | Analyses | Board | Results**. Tabs are visible on all `/dashboard/*` routes. Detail pages hide tabs and show a back link.
-
-### Key Components by View
-
-**Dashboard (analyses list):**
-- `app/dashboard/components/DashboardPageClient.tsx` — header + "+ New Analysis" button
-- `app/dashboard/components/DashboardList.tsx` — analysis cards with delete confirm, empty state
-- `app/dashboard/components/NewAnalysisModal.tsx` — modal wrapping AnalyzerIsland
-
-**Analysis flow (inside NewAnalysisModal):**
-- `app/components/AnalyzerIsland.tsx` — state machine: idle → loading → success / video-polling
-- `app/components/AnalyzeForm.tsx` — URL + competitor URL inputs
-- `app/components/VideoUploadForm.tsx` — video file upload
-- `app/components/LoadingStepper.tsx` — 5-step progress indicator (15-25s)
-- `app/components/VideoPollingState.tsx` — polls for video analysis completion
-- `app/components/AnalysisResults.tsx` — wraps AnalysisDetailView for live results
-
-**Analysis detail (/dashboard/[id]):**
-- `app/dashboard/[id]/AnalysisWithBoard.tsx` — client wrapper: tRPC queries + "Add to Board" per row
-- `components/AnalysisDetailView.tsx` — renders context panel + results table + competitor tab
-- `components/V2ContextPanel.tsx` — classification grid (target user, lifecycle, business model, product type) + diagnosis (binding constraint, dimensions)
-- `components/AnalysisContextPanel.tsx` — v1 context (audience, mindset, goal, hesitations)
-- `components/ResultsTable.tsx` — ranked test ideas (desktop table + mobile cards), CSV export
-- `components/ResultsSummary.tsx` — aggregate tier counts
-- `components/CompetitorInsightsTab.tsx` — competitor comparison results
-- `components/TabNavigation.tsx` — Analysis / Competitor tab switcher
-
-**Board (/dashboard/board):**
-- `app/dashboard/board/components/BoardShellClient.tsx` — tRPC query wrapper
-- `app/dashboard/board/components/BoardShell.tsx` — useReducer state, optimistic drag-and-drop, all dialog flows
-- `app/dashboard/board/components/KanbanColumn.tsx` — single column with drop zone, memo'd
-- `app/dashboard/board/components/KanbanCard.tsx` — draggable card (element + testIdea), keyboard shortcuts (Alt+Arrow, Shift+Delete)
-- `app/dashboard/board/components/CardDetailModal.tsx` — card detail overlay: hypothesis, copy ideas (CRUD), selected copy editor
-- `app/dashboard/board/components/CompleteDialog.tsx` — experiment completion form (outcome, metrics, notes)
-- `app/dashboard/board/components/ExampleDialog.tsx` — copy selection confirmation (clone or replace)
-- `app/dashboard/board/components/ExpandIdeaForm.tsx` — manual hypothesis creation
-
-**Company Context (/dashboard/context):**
-- `app/dashboard/context/CompanyContextPage.tsx` — statements list (auto-save, debounced), material upload
-- `app/dashboard/context/UploadArea.tsx` — file upload (URL, text, video materials)
-
-**Results (/dashboard/results):**
-- `app/dashboard/results/ResultsList.tsx` — completed experiments with outcome badges, delete confirm dialog
-- `app/dashboard/results/[id]/page.tsx` — server component: outcome, metrics grid, notes, prioritization badges
-- `app/dashboard/results/[id]/FollowUpSection.tsx` — AI-generated follow-up hypotheses
-
-### Board Columns
-
-5 active columns (defined in `lib/board/types.ts`): **Backlog | Not Ready | Ready | In Progress | In Review**. A 6th column "Completed" is used logically but cards move to `/dashboard/results` on completion.
-
-### Data Flow Pattern
-
-All views use the same pattern: Server Component fetches via tRPC caller → seeds TanStack Query cache via `HydrationBoundary` → Client Component reads via `trpc.*.useQuery` with `staleTime: 30_000`. Mutations use optimistic updates with rollback on error.
-
-### CSS
-
-CSS Modules + BEM naming. No Tailwind. Style guide at `docs/style-guide.md`. Dark theme with surface elevation hierarchy (`bg-base` → `bg-surface` → `bg-elevated`). Accent colors: amber (CTA), green (success), red (error), purple (info).

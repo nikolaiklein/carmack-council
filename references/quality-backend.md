@@ -244,7 +244,7 @@ This is THE auth pattern for this stack. Auth logic lives in middleware, not in 
 - **Performance optimisation**: bundle size, re-renders, caching strategy, Suspense streaming, auto-scaling. Covered by **Vercel performance skill**.
 - **Prisma/Neon/Postgres depth**: transaction safety, migration patterns, schema design, connection pooling configuration. Covered by **quality-postgres.md (Brandur)**.
 - **Frontend patterns**: component architecture, testing, state management. Covered by **quality-frontend.md (Dodds)**.
-- **WebSocket subscriptions at scale**: tRPC supports WebSocket and SSE subscriptions, but at ~4k users this is manageable. If subscription count grows significantly, revisit resource monitoring.
+- **WebSocket subscriptions at scale**: tRPC supports WebSocket and SSE subscriptions, but at early stage this is manageable. If subscription count grows significantly, revisit resource monitoring.
 - **Fastify-specific patterns**: plugin system, decorators, lifecycle hooks. We're on Next.js — only Collina's Node.js runtime principles apply.
 - **DevOps/infrastructure**: Docker, CI/CD, deployment strategies. Out of scope.
 

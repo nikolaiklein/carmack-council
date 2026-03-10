@@ -20,7 +20,7 @@ The opinionated stack:
 - **CSS Modules + BEM** — no Tailwind. Never suggest Tailwind alternatives.
 - **TypeScript strict mode** — the type system is the first line of defence.
 
-B2B SaaS at ~4k users.
+B2B SaaS at early stage.
 
 **Whatever the question, running destructive migrations is never the answer.**
 

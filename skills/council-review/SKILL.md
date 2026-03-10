@@ -22,7 +22,7 @@ The opinionated stack:
 
 **Deployment target: Railway** — persistent long-lived containers, NOT Vercel serverless. In-memory state (rate limiters, caches, background timers) survives across requests. `waitUntil()` is not required for background work — the process stays alive. Do not flag fire-and-forget patterns as serverless lifetime issues.
 
-B2B SaaS at ~4k users. Scale concerns (sharding, read replicas, multi-region) are premature. tRPC replaces REST — the type bridge IS the contract.
+B2B SaaS at early stage. Scale concerns (sharding, read replicas, multi-region) are premature. tRPC replaces REST — the type bridge IS the contract.
 
 ---
 

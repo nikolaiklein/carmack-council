@@ -187,7 +187,7 @@ Both argue against premature structural complexity. Fowler: "Don't even consider
 **Premature modularisation**
 - Feature modules with one consumer and one implementation
 - Abstraction layers (repositories, services, controllers) when the app has 10 tRPC procedures
-- At 4k users with a Next.js/tRPC monolith: you probably don't need a "service layer" — your tRPC procedures ARE the service layer. Prisma queries in procedures is fine.
+- At early stage with a Next.js/tRPC monolith: you probably don't need a "service layer" — your tRPC procedures ARE the service layer. Prisma queries in procedures is fine.
 - Severity: **P3** unless the indirection is actively causing confusion (**P2**)
 
 **Missing boundaries where they matter**
