@@ -4,7 +4,7 @@ An ultra-opinionated, multi-agent development framework for [Claude Code](https:
 
 ## But why The Carmack Council?
 
-Named after the GOAT engineer and all around legend John Carmack, and built on his engineering philosophy: simplicity over cleverness, concrete over abstract, economic over aesthetic.
+Named after the GOAT John Carmack, and built on his engineering philosophy: simplicity over cleverness, concrete over abstract, economic over aesthetic.
 
 This skill was built for my own use with no initial intention to actually release it, and as such is tuned to my preferred greenfield stack:
 
@@ -16,9 +16,9 @@ This skill was built for my own use with no initial intention to actually releas
 - CSS Modules + BEM
 - Railway
 
-I have reasons (ranging from solid to near arbitrary) for picking all of these technologies. This iI've used since before AI, because it allows me to get projects spun up and working quickly. It offers decent performance, generous free tiers and good scalability. 
+I have reasons (ranging from solid to near arbitrary) for picking all of these. This is what I used pre-AI because it let me ship fast with decent performance, generous free tiers and good scalability.
 
-I know some people hate this stack or elements of it. I'm OK with that. The main point is to introduce the council concept. It's easy enough to adapt this to your preferred/existing stack.
+Some people hate this stack or elements of it. I'm OK with that. The point is the council concept — adapting it to your stack is straightforward.
 
 The council is chaired by John Carmack and includes 10 domain experts:
 
@@ -37,7 +37,7 @@ The council is chaired by John Carmack and includes 10 domain experts:
 
 Every plan, implementation decision and review finding is grounded in the publicly shared expertise of domain leaders who build and design world-class software. Not "best practices." Not docs examples. The strong opinions of engineers and designers whose work is next level.
 
-They're all total ballers. Check out their sites, buy their books, use their products, enroll in their courses.
+They're all total ballers. Check out their sites, buy their books, use their products.
 
 
 
@@ -55,13 +55,11 @@ They're all total ballers. Check out their sites, buy their books, use their pro
 
 3. **Council Implement** — Executes the plan task by task. Loads each expert's reference document before implementing their task. Verifies (type check, lint, test) after every task. Produces an implementation log.
 
-4. **Council Review** — 10 domain experts independently review the code in parallel, each in their own context window. The Chair merges, deduplicates, and prioritises into P1/P2/P3 findings. Automated checks (tsc, lint, vitest, cypress) run first.
-
-*** Not every expert participates in every skill. The plan uses all ten. The review uses 10 (no Willison — most code reviews don't involve LLM pipelines). The implementer loads the relevant expert per task. ***
+4. **Council Review** — Ten domain experts independently review the code in parallel, each in their own context window. The Chair merges, deduplicates, and prioritises into P1/P2/P3 findings. Automated checks (tsc, lint, vitest) run first. New conventions surfaced during review are flagged for the user to accept into conventions.md
 
 
 ### The Vercel Performance Expert
-The Vercel Performance subagent references ~/.claude/skills/react-best-practices/rules/ — this is a separate Vercel skill, not part of this repo. If you don't have it installed, the Vercel subagent will fail gracefully (no recommendations returned), and the other 10 experts will work fine. The review and plan will note "Vercel — no findings" in the breakdown, which is accurate if slightly misleading. you can also just delete the Vercel expert from the Skill.md file
+The Vercel Performance subagent references ~/.claude/skills/react-best-practices/rules/ — this is a separate Vercel skill, not part of this repo. If you don't have it installed, the Vercel subagent will fail gracefully (no recommendations returned), and the other nine experts will work fine. The review and plan will note "Vercel — no findings" in the breakdown, which is accurate if slightly misleading. you can also just delete the Vercel expert from the Skill.md file
 
 If you want the full 10-expert experience, install the [Vercel React Best Practices](https://github.com/vercel-labs/agent-skills) skill separately. If you don't care about Next.js performance auditing, ignore this entirely — the council works without it.
 
@@ -163,6 +161,15 @@ The key architectural pattern is **parallel subagents with independent context w
 
 This scales to large codebases because no single context window needs to hold everything. The Chair orchestrates; the experts deep-read.
 
+## conventions.md
+
+The council learns. When a review surfaces a pattern worth keeping — an error handling approach, a naming convention, a component structure — you accept it into `conventions.md` at your project root. All three downstream skills read this file: **council-plan** respects conventions when architecting tasks, **council-implement** follows them when writing code, and **council-review** skips them when scanning for findings. The council never flags accepted patterns as issues and never plans against decisions you've already made.
+
+You can also add your own conventions directly — anything you want the council to treat as settled. If your team has a preferred pattern for API error responses or a rule about where shared types live, add it. The council doesn't care whether a convention came from a review or from you. It just respects what's in the file.
+
+This is what gives the workflow its compound effect. The first review is cold. By the tenth, the council knows your codebase's accepted patterns and only flags genuine new issues.
+
+The file is simple — each convention is a short entry describing what the pattern is and why it exists. See [`example_conventions.md`](example_conventions.md) for the format.
 
 ## Disclaimer
 If somehow a member of the council stumbles upon this repo, please know that the reason you're here is because I (and many others) see you as pretty much the absolute leader in your domain. I basically think you're awesome, and fanboy hard on your work. 
