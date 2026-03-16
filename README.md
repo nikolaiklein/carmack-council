@@ -57,6 +57,8 @@ They're all total ballers. Check out their sites, buy their books, use their pro
 
 4. **Council Review** — Ten domain experts independently review the code in parallel, each in their own context window. The Chair merges, deduplicates, and prioritises into P1/P2/P3 findings. Automated checks (tsc, lint, vitest) run first. New conventions surfaced during review are flagged for the user to accept into conventions.md
 
+5. **Test Architect** — Kent Beck's testing philosophy made operational. Three modes: audit existing tests against Beck's 11 principles and surface theatre (mock theatre, assertion-free tests, missing happy paths), specify tests with a traceability matrix mapping every acceptance criterion to a test layer, or fix identified issues directly. Standalone — usable at any point in the workflow.
+
 
 ### The Vercel Performance Expert
 The Vercel Performance subagent references ~/.claude/skills/react-best-practices/rules/ — this is a separate Vercel skill, not part of this repo. If you don't have it installed, the Vercel subagent will fail gracefully (no recommendations returned), and the other nine experts will work fine. The review and plan will note "Vercel — no findings" in the breakdown, which is accurate if slightly misleading. you can also just delete the Vercel expert from the Skill.md file
@@ -74,6 +76,7 @@ Download individual `.skill` packages from the [`dist/`](dist/) directory:
 - [`council-plan.skill`](dist/council-plan.skill) — Feature planning with 10 parallel experts
 - [`council-implement.skill`](dist/council-implement.skill) — Plan execution with expert-guided implementation
 - [`spec-writer.skill`](dist/spec-writer.skill) — Structured specification generation
+- [`test-architect.skill`](dist/test-architect.skill) — Test auditing, specification, and fix powered by Beck's principles
 
 Each `.skill` file is a self-contained zip archive with the SKILL.md and all required reference documents bundled inside. Install via Claude Code's skill installation.
 
@@ -122,7 +125,10 @@ carmack-council/
 │   ├── council-implement/
 │   │   ├── SKILL.md
 │   │   └── manifest.json
-│   └── spec-writer/
+│   ├── spec-writer/
+│   │   ├── SKILL.md
+│   │   └── manifest.json
+│   └── test-architect/
 │       ├── SKILL.md
 │       └── manifest.json
 ├── scripts/
@@ -133,7 +139,8 @@ carmack-council/
     ├── council-review.skill
     ├── council-plan.skill
     ├── council-implement.skill
-    └── spec-writer.skill
+    ├── spec-writer.skill
+    └── test-architect.skill
 ```
 
 ## Forking for Your Stack
