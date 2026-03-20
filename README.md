@@ -1,47 +1,44 @@
-# The Carmack Council
+# The Carmack Council — Python / Telegram Fork
 
-An ultra-opinionated, multi-agent development framework for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Founded on my personal belief that off-the-shelf Claude Code skills often lead to average results, and stack specific skills based on real world, battle tested engineering principles lead to awesomeness. 
+> Форк [SamJHudson01/Carmack-Council](https://github.com/SamJHudson01/Carmack-Council), адаптированный под стек **Python 3.11+ / FastAPI / python-telegram-bot / SQLAlchemy / Pydantic v2 / pytest**.
 
-## But why The Carmack Council?
+Мультиагентный фреймворк разработки для [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Философия Джона Кармака: простота важнее хитрости, конкретика важнее абстракции, экономия важнее эстетики.
 
-Named after GOAT engineer and all around legend John Carmack, and built on his engineering philosophy: simplicity over cleverness, concrete over abstract, economic over aesthetic.
+## Стек
 
-This skill was built for my own use with no initial intention to actually release it, and as such is tuned to my preferred greenfield stack:
+| Слой | Технология |
+|------|-----------|
+| Язык | Python 3.11+ (type hints, async/await) |
+| HTTP | FastAPI |
+| Бот | python-telegram-bot |
+| Валидация | Pydantic v2 |
+| ORM | SQLAlchemy async |
+| БД | SQLite / Firestore |
+| Авторизация | Telegram user ID |
+| UI | Telegram inline keyboards |
+| Деплой | Docker, Cloud Run |
+| AI | Gemini via LiteLLM |
+| Тесты | pytest, pytest-asyncio, httpx |
+| Линтинг | ruff, pyright |
 
-- Next.js App Router
-- tRPC
-- Prisma
-- Neon
-- Clerk
-- CSS Modules + BEM
-- Railway
+## Совет экспертов
 
-I have reasons (ranging from solid to near arbitrary) for picking all of these. This is what I used pre-AI because it let me ship fast with decent performance, generous free tiers and good scalability.
+Совет возглавляет Джон Кармак. 10 доменных экспертов:
 
-Some people hate this stack or elements of it. I'm OK with that. The point is the council concept — adapting it to your stack is straightforward.
+| Эксперт | Домен | Справочник |
+|---------|-------|-----------|
+| Troy Hunt | Безопасность | `security.md` |
+| Martin Fowler | Рефакторинг / Структура | `refactoring.md` |
+| Telegram UX Expert | Качество UX бота | `quality-frontend.md` |
+| Backend/Python Expert | Качество бэкенда | `quality-backend.md` |
+| Brandur Leach | Качество БД | `quality-postgres.md` |
+| Docker/Deploy Expert | Деплой и инфраструктура | — |
+| Simon Willison | LLM-пайплайны | `quality-llm.md` |
+| Karri Saarinen | Качество UI | `quality-ui.md` |
+| Vitaly Friedman | Качество UX | `quality-ux.md` |
+| Kent Beck | Качество тестов | `quality-testing.md` |
 
-The council is chaired by John Carmack and includes 10 domain experts:
-
-| Expert | Domain | Reference Doc | Link |
-|--------|--------|--------------|------|
-| Troy Hunt | Security | `security.md` | https://www.troyhunt.com/ |
-| Martin Fowler | Refactoring / Structure | `refactoring.md` | https://martinfowler.com/ |
-| Kent C. Dodds | Frontend Quality | `quality-frontend.md` | https://kentcdodds.com/ |
-| Matteo Collina | Backend Quality | `quality-backend.md` | https://nodeland.dev/ |
-| Brandur Leach | Postgres Quality | `quality-postgres.md` | https://brandur.org/ |
-| Vercel Performance | Performance | External rules | https://vercel.com/ |
-| Simon Willison | LLM Pipeline Quality | `quality-llm.md` | https://simonwillison.net/ |
-| Karri Saarinen | UI Quality | `quality-ui.md` | https://karrisaarinen.com/ |
-| Vitaly Friedman | UX Quality | `quality-ux.md` | https://www.smashingmagazine.com/author/vitaly-friedman/ |
-| Kent Beck | Test Quality | `quality-testing.md` | https://kentbeck.com/ |
-
-Every plan, implementation decision and review finding is grounded in the publicly shared expertise of domain leaders who build and design world-class software. Not "best practices." Not docs examples. The strong opinions of engineers and designers whose work is next level.
-
-They're all total ballers. Check out their sites, buy their books, use their products, enroll in their courses.
-
-
-
-## The Workflow
+## Рабочий процесс
 
 ```
 /spec-writer  →  /council-plan  →  /council-implement  →  /council-review
@@ -49,56 +46,64 @@ They're all total ballers. Check out their sites, buy their books, use their pro
     └───────────────────────────────────────────────────────────┘
 ```
 
-1. **Spec Writer** — Produces structured specifications with Job Stories, Gherkin acceptance criteria, and three-tier boundaries. Adaptive complexity: small changes get 200 words, features get 500–800, products get up to 2,000.
+**+ `/test-architect`** — используется на любом этапе (аудит, спецификация или исправление тестов).
 
-2. **Council Plan** — Carmack chairs 10 domain experts who independently advise on how to build the feature. Interactive discovery with the developer, then parallel subagent dispatch. Produces a sequenced, dependency-ordered implementation plan with no code.
+| Скилл | Команда | Что делает |
+|-------|---------|-----------|
+| Spec Writer | `/spec-writer` | Спецификация: Job Stories, Gherkin-критерии, три уровня границ |
+| Council Plan | `/council-plan` | 10 экспертов планируют фичу параллельно (без кода) |
+| Council Implement | `/council-implement` | Выполняет план задача за задачей, проверяя после каждой |
+| Council Review | `/council-review` | 10 экспертов ревьюят код в параллельных подагентах (200k контекст каждый) |
+| Test Architect | `/test-architect` | Аудит тестов по 11 принципам Бека, спецификация тестов, исправление |
 
-3. **Council Implement** — Executes the plan task by task. Loads each expert's reference document before implementing their task. Verifies (type check, lint, test) after every task. Produces an implementation log.
+## Установка
 
-4. **Council Review** — Ten domain experts independently review the code in parallel, each in their own context window. The Chair merges, deduplicates, and prioritises into P1/P2/P3 findings. Automated checks (tsc, lint, vitest) run first. New conventions surfaced during review are flagged for the user to accept into conventions.md
+### Быстрая установка (готовые пакеты)
 
-5. **Test Architect** — Kent Beck's testing philosophy made operational. Three modes: audit existing tests against Beck's 11 principles and surface theatre (mock theatre, assertion-free tests, missing happy paths), specify tests with a traceability matrix mapping every acceptance criterion to a test layer, or fix identified issues directly. Standalone — usable at any point in the workflow.
-
-
-### The Vercel Performance Expert
-The Vercel Performance subagent references ~/.claude/skills/react-best-practices/rules/ — this is a separate Vercel skill, not part of this repo. If you don't have it installed, the Vercel subagent will fail gracefully (no recommendations returned), and the other nine experts will work fine. The review and plan will note "Vercel — no findings" in the breakdown, which is accurate if slightly misleading. you can also just delete the Vercel expert from the Skill.md file
-
-If you want the full 10-expert experience, install the [Vercel React Best Practices](https://github.com/vercel-labs/agent-skills) skill separately. If you don't care about Next.js performance auditing, ignore this entirely — the council works without it.
-
-
-## Installation
-
-### Quick install
-
-Download individual `.skill` packages from the [`dist/`](dist/) directory:
-
-- [`council-review.skill`](dist/council-review.skill) — Code review with 10 parallel experts
-- [`council-plan.skill`](dist/council-plan.skill) — Feature planning with 10 parallel experts
-- [`council-implement.skill`](dist/council-implement.skill) — Plan execution with expert-guided implementation
-- [`spec-writer.skill`](dist/spec-writer.skill) — Structured specification generation
-- [`test-architect.skill`](dist/test-architect.skill) — Test auditing, specification, and fix powered by Beck's principles
-
-Each `.skill` file is a self-contained zip archive with the SKILL.md and all required reference documents bundled inside. Install via Claude Code's skill installation.
-
-### From source
+Скачай `.skill` файлы из папки [`dist/`](dist/) и установи в Claude Code:
 
 ```bash
-git clone https://github.com/SamJHudson01/Carmack-Council.git
+# Скачай репозиторий
+git clone https://github.com/nikolaiklein/carmack-council.git
+cd carmack-council
+
+# Установи нужные скиллы (можно все или по отдельности)
+claude skill install dist/spec-writer.skill
+claude skill install dist/council-plan.skill
+claude skill install dist/council-implement.skill
+claude skill install dist/council-review.skill
+claude skill install dist/test-architect.skill
+```
+
+### Из исходников
+
+```bash
+git clone https://github.com/nikolaiklein/carmack-council.git
 cd carmack-council
 chmod +x scripts/build.sh
 ./scripts/build.sh
+
+# Затем установи собранные .skill файлы
+claude skill install dist/spec-writer.skill
+claude skill install dist/council-plan.skill
+claude skill install dist/council-implement.skill
+claude skill install dist/council-review.skill
+claude skill install dist/test-architect.skill
 ```
 
-This reads each skill's `manifest.json`, copies the declared references from the shared `references/` directory into each skill folder, validates, packages into `.skill` files in `dist/`, and cleans up.
+### Требования
 
-## Repo Structure
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) с поддержкой скиллов
+- Python 3.6+ (для скрипта сборки)
+
+## Структура репозитория
 
 ```
 carmack-council/
 ├── README.md
-├── STACK.md              # Every stack-specific assumption, listed
+├── STACK.md              # Все стековые допущения
 ├── LICENSE               # MIT
-├── references/           # Single source of truth for all reference docs
+├── references/           # Справочные документы (single source of truth)
 │   ├── security.md
 │   ├── quality-backend.md
 │   ├── quality-frontend.md
@@ -108,83 +113,34 @@ carmack-council/
 │   ├── quality-ui.md
 │   ├── quality-ux.md
 │   ├── refactoring.md
-│   └── spec-writer/      # Spec-writer-specific references
-│       ├── anti-patterns.md
-│       ├── acceptance-criteria-guide.md
-│       ├── feature-spec.md
-│       ├── product-spec.md
-│       ├── small-change.md
-│       └── boundary-examples.md
-├── skills/
+│   └── spec-writer/
+├── skills/               # Исходники скиллов
 │   ├── council-review/
-│   │   ├── SKILL.md
-│   │   └── manifest.json
 │   ├── council-plan/
-│   │   ├── SKILL.md
-│   │   └── manifest.json
 │   ├── council-implement/
-│   │   ├── SKILL.md
-│   │   └── manifest.json
 │   ├── spec-writer/
-│   │   ├── SKILL.md
-│   │   └── manifest.json
 │   └── test-architect/
-│       ├── SKILL.md
-│       └── manifest.json
-├── scripts/
+├── scripts/              # Сборка
 │   ├── build.sh
-│   ├── package_skill.py
-│   └── quick_validate.py
-└── dist/                 # Pre-built .skill packages
-    ├── council-review.skill
-    ├── council-plan.skill
-    ├── council-implement.skill
-    ├── spec-writer.skill
-    └── test-architect.skill
+│   └── package_skill.py
+└── dist/                 # Собранные .skill пакеты
 ```
-
-## Forking for Your Stack
-
-These skills are opinionated for a specific stack (Next.js App Router / tRPC / Prisma / Neon / Clerk / CSS Modules + BEM / Railway). **We ship opinionated — you fork and adapt.**
-
-See [`STACK.md`](STACK.md) for:
-- Every stack-specific assumption across all skills and references
-- Which files contain each assumption
-- A step-by-step guide for adapting to your stack
-
-General approach:
-1. Update the Stack Context sections in each SKILL.md
-2. Update the subagent prompt templates that reference specific technologies
-3. Update reference documents where stack-specific patterns are described
-4. Run `./scripts/build.sh` to rebuild packages
-
-The principles are universal — simplicity, correctness, economic thinking. Only the stack-specific patterns change.
-
-## How It Works
-
-Each skill is a SKILL.md file (the instruction set) plus reference documents (the domain knowledge). The SKILL.md tells Claude Code how to orchestrate — which subagents to spawn, what phases to follow, what output format to use. The reference docs give each subagent deep domain expertise.
-
-The key architectural pattern is **parallel subagents with independent context windows**. When council-review runs, the Chair (orchestrator) doesn't read every file — it builds a structural map, writes a context brief, then dispatches 10 subagents in parallel. Each subagent gets its own 200k context window, reads only its domain-relevant files, and produces findings independently. The Chair then merges, deduplicates, and prioritises.
-
-This scales to large codebases because no single context window needs to hold everything. The Chair orchestrates; the experts deep-read.
 
 ## conventions.md
 
-The council learns. When a review surfaces a pattern worth keeping — an error handling approach, a naming convention, a component structure — you accept it into `conventions.md` at your project root. All three downstream skills read this file: **council-plan** respects conventions when architecting tasks, **council-implement** follows them when writing code, and **council-review** skips them when scanning for findings. The council never flags accepted patterns as issues and never plans against decisions you've already made.
+Совет учится. После ревью он предлагает паттерны для `conventions.md` в корне твоего проекта. Все три downstream-скилла (plan, implement, review) читают этот файл — принятые конвенции не будут повторно флагнуты. С каждым ревью совет знает твою кодовую базу лучше.
 
-You can also add your own conventions directly — anything you want the council to treat as settled. If your team has a preferred pattern for API error responses or a rule about where shared types live, add it. The council doesn't care whether a convention came from a review or from you. It just respects what's in the file.
+## Отличия от оригинала
 
-This is what gives the workflow its compound effect. The first review is cold. By the tenth, the council knows your codebase's accepted patterns and only flags genuine new issues.
+Этот форк адаптирован с Next.js/TypeScript → **Python/FastAPI/Telegram**:
+- Заменены эксперты: Kent C. Dodds → Telegram UX Expert, Matteo Collina → Backend/Python Expert, Vercel → Docker/Deploy Expert
+- Все подагентные промпты переписаны под Python-стек
+- Автопроверки: `tsc/eslint/vitest` → `ruff/pyright/pytest`
+- Справочники `quality-backend.md`, `quality-testing.md` адаптированы
+- Добавлен 5-й скилл `test-architect` (из оригинала), адаптирован под pytest
 
-The file is simple — each convention is a short entry describing what the pattern is and why it exists. See [`example_conventions.md`](example_conventions.md) for the format.
+Оригинал: [SamJHudson01/Carmack-Council](https://github.com/SamJHudson01/Carmack-Council)
 
+## Лицензия
 
-
-## Requirements
-
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with skill support
-- Python 3.6+ (for the build script)
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+MIT — см. [LICENSE](LICENSE).
