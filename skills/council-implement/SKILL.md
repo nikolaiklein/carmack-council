@@ -1,6 +1,6 @@
 ---
 name: council-implement
-description: Execute a Carmack Council plan task by task. Use when explicitly asked to implement a plan, do a "council implement", "carmack implement", "council build", or invoke /council-implement. Reads the output of /council-plan and builds each task sequentially, loading the relevant expert's reference document per task. Verifies after each task. Produces an implementation log for /council-review. Stack: Next.js App Router / React / TypeScript / tRPC / Prisma / Neon / Clerk.
+description: Execute a Carmack Council plan task by task. Use when explicitly asked to implement a plan, do a "council implement", "carmack implement", "council build", or invoke /council-implement. Reads the output of /council-plan and builds each task sequentially, loading the relevant expert's reference document per task. Verifies after each task. Produces an implementation log for /council-review. Stack: Python 3.11+ / FastAPI / python-telegram-bot / SQLAlchemy / SQLite / Pydantic v2.
 ---
 
 # Carmack Council Implementer
@@ -12,14 +12,14 @@ You are the **Builder** — John Carmack's philosophy applied to execution. You 
 ## Stack Context
 
 The opinionated stack:
-- **Next.js App Router** (latest) — React, TypeScript, Server Components, Server Actions
-- **tRPC** — end-to-end type-safe API layer. No REST routes.
-- **Prisma** — ORM on Neon serverless Postgres.
-- **Neon** — serverless Postgres. Connection pooling via PgBouncer.
-- **Clerk** — authentication. Focus on authorisation, not auth mechanics.
-- **CSS Modules + BEM** — no Tailwind. Never suggest Tailwind alternatives.
-- **TypeScript strict mode** — the type system is the first line of defence.
-
+- **Python 3.11+** — async/await, type hints, Pydantic v2 for validation
+- **FastAPI** — async HTTP framework, dependency injection, automatic OpenAPI docs
+- **python-telegram-bot** — async Telegram Bot API wrapper
+- **SQLite / Firestore** — lightweight persistence. No heavy ORM needed.
+- **SQLAlchemy async** — when ORM is needed for SQLite
+- **Docker + Cloud Run / Railway** — containerized deployment, env vars for config
+- **Gemini via LiteLLM** — AI calls through LiteLLM proxy at http://89.167.90.181:4000
+- **pytest + pytest-asyncio** — testing with httpx for FastAPI test client
 
 **Whatever the question, running destructive migrations is never the answer.**
 
@@ -51,11 +51,11 @@ Read the reference document named in the task's `Ref` row before writing any cod
 |---|---|
 | Troy Hunt (Security) | `references/security.md` |
 | Martin Fowler (Refactoring) | `references/refactoring.md` |
-| Kent C. Dodds (Frontend) | `references/quality-frontend.md` |
-| Matteo Collina (Backend) | `references/quality-backend.md` |
-| Brandur Leach (Postgres) | `references/quality-postgres.md` |
+| Telegram UX Expert | `references/quality-frontend.md` |
+| Backend/Python Expert | `references/quality-backend.md` |
+| Brandur Leach (Database) | `references/quality-postgres.md` |
 | Simon Willison (LLM Pipeline) | `references/quality-llm.md` |
-| Vercel Performance | `~/.claude/skills/react-best-practices/rules/` |
+| Docker/Deploy Expert | (Dockerfile best practices, Cloud Run optimization) |
 
 If a task has cross-references to other experts, read those reference documents too. The primary domain's doc guides the main implementation; cross-referenced docs inform specific decisions within the task.
 
@@ -82,14 +82,15 @@ Write the code. Follow these rules:
 After completing each task, run verification:
 
 ```
-# Type check
-npx tsc --noEmit
+# Lint + Format
+uv run ruff check src/ tests/
+uv run ruff format --check src/ tests/
 
-# Lint
-npx eslint . --ext .ts,.tsx
+# Type check
+uv run pyright src/
 
 # Run existing tests
-npm test
+uv run pytest
 ```
 
 If any verification step fails:

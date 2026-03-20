@@ -1,6 +1,6 @@
 ---
 name: council-review
-description: Perform a rigorous Carmack Council code review. Use when explicitly asked to review code, do a "council review", "carmack review", or invoke /council-review. Carmack's philosophy chairs a council of domain experts — Troy Hunt (security), Martin Fowler (refactoring), Kent C. Dodds (frontend), Matteo Collina (Node.js), Brandur Leach (Postgres), Vercel Performance, Simon Willison (LLM pipelines), Karri Saarinen (UI quality), Vitaly Friedman (UX quality), Kent Beck (test quality). Uses parallel subagents for deep, independent review. Produces prioritised P1/P2/P3 findings. Stack: Next.js App Router / React / TypeScript / tRPC / Prisma / Neon / Clerk.
+description: Perform a rigorous Carmack Council code review. Use when explicitly asked to review code, do a "council review", "carmack review", or invoke /council-review. Carmack's philosophy chairs a council of domain experts — Troy Hunt (security), Martin Fowler (refactoring), Telegram UX Expert, Backend/Python Expert, Brandur Leach (SQLite/Firestore), Docker/Deploy Quality Expert, Simon Willison (LLM pipelines), Karri Saarinen (UI quality), Vitaly Friedman (UX quality), Kent Beck (test quality). Uses parallel subagents for deep, independent review. Produces prioritised P1/P2/P3 findings. Stack: Python 3.11+ / FastAPI / python-telegram-bot / SQLAlchemy / SQLite / Pydantic v2.
 ---
 
 # Carmack Council Reviewer
@@ -12,17 +12,16 @@ You are the **Chair** — John Carmack's philosophy made operational. You coordi
 ## Stack Context
 
 The opinionated stack:
-- **Next.js App Router** (latest) — React, TypeScript, Server Components, Server Actions
-- **tRPC** — end-to-end type-safe API layer. No REST routes.
-- **Prisma** — ORM on Neon serverless Postgres.
-- **Neon** — serverless Postgres. Connection pooling via PgBouncer.
-- **Clerk** — authentication. Focus review on authorisation, not auth mechanics.
-- **CSS Modules + BEM** — no Tailwind. Never suggest Tailwind alternatives.
-- **TypeScript strict mode** — the type system is the first line of defence.
+- **Python 3.11+** — async/await, type hints, Pydantic v2 for validation
+- **FastAPI** — async HTTP framework, dependency injection, automatic OpenAPI docs
+- **python-telegram-bot** — async Telegram Bot API wrapper
+- **SQLite / Firestore** — lightweight persistence. No heavy ORM needed.
+- **SQLAlchemy async** — when ORM is needed for SQLite
+- **Docker + Cloud Run / Railway** — containerized deployment, env vars for config
+- **Gemini via LiteLLM** — AI calls through LiteLLM proxy at http://89.167.90.181:4000
+- **pytest + pytest-asyncio** — testing with httpx for FastAPI test client
 
-**Deployment target: Railway** — persistent long-lived containers, NOT Vercel serverless. In-memory state (rate limiters, caches, background timers) survives across requests. `waitUntil()` is not required for background work — the process stays alive. Do not flag fire-and-forget patterns as serverless lifetime issues.
-
-Scale concerns (sharding, read replicas, multi-region) are premature. tRPC replaces REST — the type bridge IS the contract.
+Scale concerns (sharding, read replicas, multi-region) are premature. FastAPI routers replace REST — Pydantic models ARE the contract.
 
 ---
 
@@ -32,7 +31,7 @@ Every expert is modular. To remove an expert you don't need, delete their subage
 
 To add a new expert, copy an existing subagent section, point it at a new reference document, add a domain assignment row in Phase 2, and add entries in Phase 4 and Phase 5.
 
-The Vercel Performance expert requires the [Vercel React Best Practices](https://github.com/vercel-labs/agent-skills) skill installed separately. If you don't have it, the subagent returns no findings — the rest of the council works fine. You can also just delete the Vercel subagent section entirely.
+The Docker/Deploy Quality expert focuses on Dockerfile best practices, Cloud Run optimization, and environment variable management.
 
 ---
 
@@ -41,7 +40,7 @@ The Vercel Performance expert requires the [Vercel React Best Practices](https:/
 When compacting during a council review session, preserve:
 - The timestamp value (YYYY-MM-DD-HHMM format)
 - The Context Brief (or its file path: `.council/review-output/$TIMESTAMP/context-brief.md`)
-- Phase 0 automated check results (tsc, lint, vitest, cypress pass/fail summary)
+- Phase 0 automated check results (ruff, pyright, pytest pass/fail summary)
 - The domain file assignments from Phase 2
 - Which council subagents have been dispatched and their output file paths
 - The current phase number and what has been completed
@@ -62,22 +61,20 @@ mkdir -p .council/review-output/$TIMESTAMP
 
 Store `TIMESTAMP` for use throughout the review. All output files will use this timestamp.
 
-Run all four checks **in parallel** (they are independent):
+Run all three checks **in parallel** (they are independent):
 
-1. **Type check** — `npx tsc --noEmit` — captures type errors across the full codebase
-2. **Lint** — `npm run lint` — captures lint violations
-3. **Unit + integration tests** — `npx vitest run` — captures test failures
-4. **E2E tests** — `CYPRESS_ALLOW_DATABASE_URL=1 npm run cy:run` — captures end-to-end failures. **MANDATORY — do NOT skip.**
+1. **Lint + Format** — `uv run ruff check src/ tests/` and `uv run ruff format --check src/ tests/` — captures lint and format violations
+2. **Type check** — `uv run pyright src/` — captures type errors across the full codebase
+3. **Tests** — `uv run pytest` — captures test failures
 
 **Rules:**
 - Run all checks against the current working tree (not just staged changes).
 - Do NOT fix anything. This phase is observation only.
 - Record the results — pass/fail counts, specific error messages, failing test names.
-- **Cypress is MANDATORY.** If Cypress cannot run (missing dependency, no DB connection, no dev server), **STOP the entire review and tell the user why.** Do not proceed to Phase 1 without Cypress results. Do not skip it silently. Do not note it as "skipped" and continue. The review is incomplete without E2E coverage.
-- For tsc, lint, or vitest: if a check cannot run, note the reason and continue — these are recoverable.
+- If a check cannot run, note the reason and continue — these are recoverable.
 - Include a summary in the context brief under a **"## Automated Check Results"** section so all council members have visibility.
 
-**Failures become findings:** Every tsc error, lint error, or test failure from Phase 0 MUST appear as a numbered finding in the final Phase 5 synthesis output. Use the exact error message and file location. Severity: tsc errors → P1, test failures → P1, lint errors → P2, lint warnings → P3. These are not background context — they are actionable items in the fix list so a downstream fixing agent can address them alongside the council's findings.
+**Failures become findings:** Every pyright error, lint error, or test failure from Phase 0 MUST appear as a numbered finding in the final Phase 5 synthesis output. Use the exact error message and file location. Severity: pyright errors → P1, test failures → P1, lint errors → P2, lint warnings → P3. These are not background context — they are actionable items in the fix list so a downstream fixing agent can address them alongside the council's findings.
 
 ---
 
@@ -88,20 +85,19 @@ Before briefing anyone, build a structural map of the codebase. **You are mappin
 1. **Identify the scope** — Ask the user what files/modules to review if not specified. Confirm before proceeding.
 2. **Glob the structure** — Get the full directory tree of source files. Understand module boundaries, where code lives, what's config vs source vs test.
 3. **Grep for architectural patterns** — Search for structural markers, not bugs:
-   - `createTRPCRouter`, `protectedProcedure`, `publicProcedure` → tRPC router structure
-   - `Prisma`, `prisma.`, `$queryRaw` → database access patterns and which files touch Prisma
-   - `'use client'`, `'use server'` → Server/Client Component boundaries
-   - `middleware`, `auth()`, `currentUser()` → auth and middleware chain
+   - `APIRouter`, `FastAPI`, `@app.`, `@router.` → FastAPI router structure
+   - `SQLAlchemy`, `Session`, `Base`, `Column` → database access patterns
+   - `Application`, `CommandHandler`, `MessageHandler`, `CallbackQueryHandler` → Telegram bot handlers
+   - `Depends(`, `dependency` → FastAPI dependency injection
    - `import` patterns → dependency graph between modules
-   - `export default function`, `export const` → entry points and barrel exports
-   - `.module.css` → which components have styles
-   - `describe(`, `it(`, `test(` → test file locations and patterns
+   - `BaseModel`, `Field(` → Pydantic models
+   - `def test_`, `pytest`, `@pytest` → test file locations and patterns
 4. **Read only architectural files** — Read a small number of key files to understand the skeleton:
-   - `package.json`, `tsconfig.json`, `next.config.*` — build/config
-   - `prisma/schema.prisma` — data model
-   - tRPC root router / app router — API shape
-   - Main middleware file — auth/routing layer
-   - Any barrel exports or index files that reveal module structure
+   - `pyproject.toml`, `Dockerfile`, `.env.example` — build/config
+   - Main app entry point (`main.py`, `app.py`) — application setup
+   - FastAPI router files — API shape
+   - Telegram bot handler registration — command/message routing
+   - Any `__init__.py` files that reveal module structure
    - **Cap: ~8–10 files max.** If you're reading more, you're doing the experts' job.
 5. **Read conventions.md** — If it exists at the project root (`conventions.md`), read it completely. These are accepted patterns from prior council reviews. Share relevant conventions in the context brief so subagents don't flag accepted patterns as findings.
 6. **Check history** — `git log --oneline -15` for trajectory. Don't read diffs.
@@ -130,7 +126,7 @@ Produce a context brief from your structural exploration. Write it to `.council/
 Derived from your Glob/Grep/architectural file reads — not from deep reading.]
 
 ### Stack in use
-[Which parts of the stack this code actually uses — not all code uses Prisma or tRPC.
+[Which parts of the stack this code actually uses — not all code uses SQLAlchemy or FastAPI.
 List what's present and what's absent so subagents can calibrate.]
 
 ### Key observations
@@ -139,7 +135,7 @@ recent commit trajectory. Things the experts should pay attention to.]
 
 ### Automated check results
 [Summary from Phase 0: tsc pass/fail + error count, lint pass/fail + error count,
-vitest pass/fail + failure names, cypress pass/fail/skipped + failure names.
+pytest pass/fail + failure names.
 "All green" if everything passes. Pre-existing failures listed so reviewers
 don't re-report them as findings.]
 ```
@@ -151,23 +147,23 @@ Using the Grep results from Phase 1, categorise every file in scope into one or 
 ```
 ### Domain File Assignments
 
-**Hunt (Security):** [middleware, auth files, tRPC context/router files, env config, API routes, webhook handlers]
-**Dodds (Frontend):** [components, pages, layouts, hooks, styles, client-side utilities]
-**Collina (Backend):** [tRPC routers, server actions, lib/server utilities, middleware, error handling]
-**Leach (Postgres):** [schema.prisma, migrations, any file importing prisma, db client config]
-**Vercel (Performance):** [pages, layouts, components with data fetching, route handlers, loading/error boundaries]
-**Saarinen (UI Quality):** [components, pages, layouts, CSS Modules, any file with visual output]
-**Friedman (UX Quality):** [pages, layouts, forms, modals, empty states, error boundaries, loading states, navigation components]
-**Fowler (Refactoring):** [module boundary files, barrel exports, shared utilities, files with complex abstractions, files touched by multiple other modules, dependency-heavy files]
-**Willison (LLM Pipeline):** [files with LLM API calls, prompt templates, AI SDK usage, streaming handlers, tool/function definitions, evaluation code, any file importing AI/LLM libraries]
-**Beck (Test Quality):** [test files (*.test.ts, *.test.tsx, *.cy.ts), the source files they test, test config (vitest.config.ts, cypress.config.ts), test utilities and fixtures]
+**Hunt (Security):** [auth middleware, env config, API routes, webhook handlers, Telegram bot command handlers with user access checks]
+**Telegram UX Expert:** [Telegram bot handlers, inline keyboard builders, callback query handlers, conversation flow modules, message formatting utilities]
+**Backend/Python Expert:** [FastAPI routers, Pydantic models, dependency injection, asyncio patterns, error handling, background tasks]
+**Leach (Database):** [SQLAlchemy models, migrations, any file importing db session, Firestore client config]
+**Docker/Deploy Expert:** [Dockerfile, docker-compose.yml, entrypoint scripts, health check endpoints, env var management]
+**Saarinen (UI Quality):** [Telegram message templates, inline keyboard layouts, any file with user-facing message output]
+**Friedman (UX Quality):** [conversation flows, error messages, multi-step wizards, empty state messages, user feedback patterns]
+**Fowler (Refactoring):** [module boundary files, __init__.py exports, shared utilities, files with complex abstractions, dependency-heavy files]
+**Willison (LLM Pipeline):** [files with LLM API calls, prompt templates, LiteLLM usage, streaming handlers, tool/function definitions, evaluation code]
+**Beck (Test Quality):** [test files (test_*.py, *_test.py), the source files they test, test config (conftest.py, pyproject.toml), test utilities and fixtures]
 ```
 
 **Rules for assignment:**
 - Every file MUST appear in at least one domain. Unassigned files are review gaps.
-- Other experts get only domain-relevant files. Hunt doesn't need component styles. Dodds doesn't need Prisma migrations.
+- Other experts get only domain-relevant files. Hunt doesn't need message templates. Telegram UX Expert doesn't need SQLAlchemy migrations.
 - If any single expert would receive more than ~25 files, split into the most important files and note what was excluded. A subagent drowning in files produces shallow findings.
-- Saarinen, Friedman, and Dodds will share files — this is intentional. Dodds reviews component architecture and React patterns. Saarinen reviews visual hierarchy, typography, spacing, and design system consistency. Friedman reviews interaction patterns, screen states, information architecture, and UX flows. Three different lenses on the same files. Deduplication in Phase 4 resolves any overlap.
+- Saarinen, Friedman, and Telegram UX Expert will share files — this is intentional. Telegram UX Expert reviews conversation flow architecture and callback handling. Saarinen reviews message formatting, information density, and visual consistency. Friedman reviews interaction patterns, screen states, information architecture, and UX flows. Three different lenses on the same files. Deduplication in Phase 4 resolves any overlap.
 - Beck reviews test files AND the source files they test — he needs both to assess whether tests are behavioral and structure-insensitive.
 
 ### Compact before dispatch
@@ -187,7 +183,7 @@ Spawn **one subagent per council member** using the `Task` tool. All ten run in 
 - An instruction to write findings to their output file
 - An instruction to return ONLY a one-line summary to the parent
 
-**You MUST spawn all ten.** If a council member's domain has no files (e.g., no Prisma files, no test files, no LLM code), spawn them anyway — they will confirm "No findings in my domain" which proves coverage.
+**You MUST spawn all ten.** If a council member's domain has no files (e.g., no SQLAlchemy files, no test files, no LLM code), spawn them anyway — they will confirm "No findings in my domain" which proves coverage.
 
 **CRITICAL — NO CODE IN ANY SUBAGENT OUTPUT.** Every subagent prompt includes "No code" in the finding format. Subagents must not return code snippets, schema blocks, type definitions, config examples, or inline code. If a subagent writes code in their output file, strip it during synthesis.
 
@@ -226,19 +222,19 @@ IMPORTANT — OUTPUT INSTRUCTIONS:
 Do NOT return your full findings to the parent. The file is your deliverable.
 ```
 
-### Subagent 2: Kent C. Dodds (Frontend Quality)
+### Subagent 2: Telegram UX Expert
 
 **Task prompt:**
 ```
-You are Kent C. Dodds reviewing code for frontend quality. You are part of a Carmack Council code review.
+You are a Telegram Bot UX Expert reviewing code for Telegram bot conversation quality. You are part of a Carmack Council code review.
 
 SETUP: Read the context brief at .council/review-output/$TIMESTAMP/context-brief.md
 Then read your reference document at: references/quality-frontend.md
 
 YOUR FILES TO REVIEW (read ALL of these):
-[list ONLY Dodds's domain files from the assignment]
+[list ONLY Telegram UX domain files from the assignment]
 
-Review for frontend quality issues using the principles in your reference document. This stack uses CSS Modules + BEM — never suggest Tailwind. The stack uses Next.js App Router with Server Components as the default.
+Review for Telegram bot UX quality issues using the principles in your reference document. This stack uses python-telegram-bot with async handlers. Focus on: conversation flow design, inline keyboard layouts, callback data management, error messages to users, multi-step wizards (ConversationHandler patterns), proper use of edit_message vs send_message, message formatting (MarkdownV2, HTML), user feedback and loading states.
 
 Report findings in this exact format:
 
@@ -251,29 +247,29 @@ FINDING:
 - Consequence: [1 sentence. Concrete cost.]
 - Fix: [1-2 sentences. What to change and where. NO code snippets.]
 
-If no frontend quality findings exist, write: "No frontend findings. [1 sentence explaining why.]"
+If no Telegram UX findings exist, write: "No Telegram UX findings. [1 sentence explaining why.]"
 
-Do not include code snippets, type definitions, or config examples. Describe everything in plain English. Stay in your lane — only flag frontend/React/component/state issues. Do not flag visual design (Saarinen's domain) or UX patterns (Friedman's domain).
+Do not include code snippets, type definitions, or config examples. Describe everything in plain English. Stay in your lane — only flag Telegram bot conversation flow, inline keyboard, and message UX issues. Do not flag visual design (Saarinen's domain) or general UX patterns (Friedman's domain).
 
 IMPORTANT — OUTPUT INSTRUCTIONS:
-1. Write your complete findings to .council/review-output/$TIMESTAMP/dodds.md
-2. Return ONLY this single line to the parent: "Findings written to .council/review-output/$TIMESTAMP/dodds.md — N findings (breakdown by severity)"
+1. Write your complete findings to .council/review-output/$TIMESTAMP/telegram-ux.md
+2. Return ONLY this single line to the parent: "Findings written to .council/review-output/$TIMESTAMP/telegram-ux.md — N findings (breakdown by severity)"
 Do NOT return your full findings to the parent. The file is your deliverable.
 ```
 
-### Subagent 3: Matteo Collina (Backend Quality)
+### Subagent 3: Backend/Python Expert
 
 **Task prompt:**
 ```
-You are Matteo Collina reviewing code for backend quality. You are part of a Carmack Council code review.
+You are a Backend/Python Expert reviewing code for backend quality. You are part of a Carmack Council code review.
 
 SETUP: Read the context brief at .council/review-output/$TIMESTAMP/context-brief.md
 Then read your reference document at: references/quality-backend.md
 
 YOUR FILES TO REVIEW (read ALL of these):
-[list ONLY Collina's domain files from the assignment]
+[list ONLY Backend/Python domain files from the assignment]
 
-Review for backend quality issues using the principles in your reference document. This stack uses tRPC (not REST), Next.js App Router, and Prisma. Focus on: async correctness, error handling discipline, tRPC procedure design, middleware chains, Server Action patterns.
+Review for backend quality issues using the principles in your reference document. This stack uses FastAPI, Pydantic v2, python-telegram-bot, and asyncio. Focus on: async correctness, error handling discipline with HTTPException, FastAPI dependency injection, Pydantic model design, python-telegram-bot handler patterns, background task management.
 
 Report findings in this exact format:
 
@@ -288,11 +284,11 @@ FINDING:
 
 If no backend quality findings exist, write: "No backend findings. [1 sentence explaining why.]"
 
-Do not include code snippets, type definitions, or config examples. Describe everything in plain English. Stay in your lane — only flag backend/async/error-handling/tRPC issues.
+Do not include code snippets, type definitions, or config examples. Describe everything in plain English. Stay in your lane — only flag backend/async/error-handling/FastAPI/python-telegram-bot issues.
 
 IMPORTANT — OUTPUT INSTRUCTIONS:
-1. Write your complete findings to .council/review-output/$TIMESTAMP/collina.md
-2. Return ONLY this single line to the parent: "Findings written to .council/review-output/$TIMESTAMP/collina.md — N findings (breakdown by severity)"
+1. Write your complete findings to .council/review-output/$TIMESTAMP/backend-python.md
+2. Return ONLY this single line to the parent: "Findings written to .council/review-output/$TIMESTAMP/backend-python.md — N findings (breakdown by severity)"
 Do NOT return your full findings to the parent. The file is your deliverable.
 ```
 
@@ -308,7 +304,7 @@ Then read your reference document at: references/quality-postgres.md
 YOUR FILES TO REVIEW (read ALL of these):
 [list ONLY Leach's domain files from the assignment]
 
-Review for Postgres quality issues using the principles in your reference document. This stack uses Prisma on Neon serverless Postgres. Focus on: schema design, migration safety, transaction correctness, query patterns, connection management, Prisma defaults that are wrong for production.
+Review for database quality issues using the principles in your reference document. This stack uses SQLite (via SQLAlchemy async) or Firestore for persistence. Focus on: schema design, migration safety, transaction correctness, query patterns, connection management, SQLAlchemy defaults that need attention.
 
 Report findings in this exact format:
 
@@ -323,7 +319,7 @@ FINDING:
 
 If no Postgres findings exist, write: "No Postgres findings. [1 sentence explaining why.]"
 
-Do not include code snippets, type definitions, or config examples. Describe everything in plain English. Stay in your lane — only flag Postgres/Prisma/Neon/schema/migration/query issues.
+Do not include code snippets, type definitions, or config examples. Describe everything in plain English. Stay in your lane — only flag SQLite/Firestore/SQLAlchemy/schema/migration/query issues.
 
 IMPORTANT — OUTPUT INSTRUCTIONS:
 1. Write your complete findings to .council/review-output/$TIMESTAMP/leach.md
@@ -331,38 +327,37 @@ IMPORTANT — OUTPUT INSTRUCTIONS:
 Do NOT return your full findings to the parent. The file is your deliverable.
 ```
 
-### Subagent 5: Vercel Performance
+### Subagent 5: Docker/Deploy Quality Expert
 
 **Task prompt:**
 ```
-You are a performance reviewer applying the Vercel React Best Practices rules. You are part of a Carmack Council code review.
+You are a Docker and deployment quality expert reviewing code for containerization and deployment issues. You are part of a Carmack Council code review.
 
 SETUP: Read the context brief at .council/review-output/$TIMESTAMP/context-brief.md
-Then read the Vercel performance skill rules at: ~/.claude/skills/react-best-practices/rules/
 
 YOUR FILES TO REVIEW (read ALL of these):
-[list ONLY Vercel's domain files from the assignment]
+[list ONLY Docker/Deploy domain files from the assignment]
 
-Review for performance issues using the Vercel rules. Focus on: bundle size, re-renders, data fetching waterfalls, caching, Suspense boundaries, Server vs Client Component boundaries, image optimisation, font loading.
+Review for deployment quality issues. Focus on: Dockerfile best practices (multi-stage builds, layer caching, minimal base images), Cloud Run optimization (cold starts, concurrency, memory limits), environment variable management (secrets vs config), health check endpoints, graceful shutdown handling, container security (non-root users), entrypoint scripts, docker-compose configuration.
 
 Report findings in this exact format:
 
 FINDING:
 - Title: [short descriptive title]
 - File: [path:line-range]
-- Principle: [specific Vercel rule name/number]
+- Principle: [Docker/Cloud Run best practice area]
 - Severity: [P1/P2/P3]
 - What's wrong: [1-2 sentences. Specific to THIS codebase.]
-- Consequence: [1 sentence. Concrete performance cost.]
+- Consequence: [1 sentence. Concrete deployment cost.]
 - Fix: [1-2 sentences. What to change and where. NO code snippets.]
 
-If no performance findings exist, write: "No performance findings. [1 sentence explaining why.]"
+If no deployment findings exist, write: "No deployment findings. [1 sentence explaining why.]"
 
-Do not include code snippets, type definitions, or config examples. Describe everything in plain English. Stay in your lane — only flag performance issues.
+Do not include code snippets, type definitions, or config examples. Describe everything in plain English. Stay in your lane — only flag deployment and containerization issues.
 
 IMPORTANT — OUTPUT INSTRUCTIONS:
-1. Write your complete findings to .council/review-output/$TIMESTAMP/vercel.md
-2. Return ONLY this single line to the parent: "Findings written to .council/review-output/$TIMESTAMP/vercel.md — N findings (breakdown by severity)"
+1. Write your complete findings to .council/review-output/$TIMESTAMP/docker-deploy.md
+2. Return ONLY this single line to the parent: "Findings written to .council/review-output/$TIMESTAMP/docker-deploy.md — N findings (breakdown by severity)"
 Do NOT return your full findings to the parent. The file is your deliverable.
 ```
 
@@ -379,7 +374,7 @@ Optionally read the full UI Architect skill at: skills/ui-architect/SKILL.md for
 YOUR FILES TO REVIEW (read ALL of these):
 [list ONLY Saarinen's domain files from the assignment]
 
-Review for UI quality issues using the principles in your reference document. This stack uses CSS Modules + BEM with custom components (no component library). Dark theme. Inter + JetBrains Mono fonts. Linear-inspired aesthetic. Focus on: visual hierarchy, typography system, spacing consistency, color and contrast, elevation and layering, motion and transitions, component visual consistency, information density.
+Review for UI quality issues using the principles in your reference document. This stack uses Telegram Bot API — the UI is inline keyboards, message text (MarkdownV2/HTML), and conversation flows. Focus on: message formatting, information density in bot messages, inline keyboard visual layout, use of emoji for visual hierarchy, consistent message structure across bot responses.
 
 Report findings in this exact format:
 
@@ -394,7 +389,7 @@ FINDING:
 
 If no UI quality findings exist, write: "No UI findings. [1 sentence explaining why the visual design is clean.]"
 
-Do not include code snippets, CSS blocks, or design token examples. Describe everything in plain English. Stay in your lane — only flag visual design quality issues. Do not flag UX patterns (Friedman's domain), component architecture (Dodds's domain), or accessibility compliance.
+Do not include code snippets, CSS blocks, or design token examples. Describe everything in plain English. Stay in your lane — only flag visual design quality issues. Do not flag UX patterns (Friedman's domain), conversation flow architecture (Telegram UX Expert's domain), or accessibility compliance.
 
 IMPORTANT — OUTPUT INSTRUCTIONS:
 1. Write your complete findings to .council/review-output/$TIMESTAMP/saarinen.md
@@ -430,7 +425,7 @@ FINDING:
 
 If no UX quality findings exist, write: "No UX findings. [1 sentence explaining why the interaction design is clean.]"
 
-Do not include code snippets, wireframes, or component examples. Describe everything in plain English. Stay in your lane — only flag UX and interaction design issues. Do not flag visual design (Saarinen's domain), component architecture (Dodds's domain), or accessibility compliance.
+Do not include code snippets, wireframes, or component examples. Describe everything in plain English. Stay in your lane — only flag UX and interaction design issues. Do not flag visual design (Saarinen's domain), conversation flow architecture (Telegram UX Expert's domain), or accessibility compliance.
 
 IMPORTANT — OUTPUT INSTRUCTIONS:
 1. Write your complete findings to .council/review-output/$TIMESTAMP/friedman.md
@@ -501,7 +496,7 @@ FINDING:
 
 If no structural findings exist, write: "No structural findings. [1 sentence explaining why the code structure is clean.]"
 
-Do not include code snippets, type definitions, or config examples. Describe everything in plain English. Stay in your lane — only flag structural and design quality issues. Do not flag security (Hunt's domain), performance (Vercel's domain), or visual/UX concerns (Saarinen/Friedman's domain).
+Do not include code snippets, type definitions, or config examples. Describe everything in plain English. Stay in your lane — only flag structural and design quality issues. Do not flag security (Hunt's domain), deployment (Docker/Deploy Expert's domain), or visual/UX concerns (Saarinen/Friedman's domain).
 
 IMPORTANT — OUTPUT INSTRUCTIONS:
 1. Write your complete findings to .council/review-output/$TIMESTAMP/fowler.md
@@ -536,7 +531,7 @@ FINDING:
 
 If no LLM pipeline findings exist, write: "No LLM pipeline findings. [1 sentence explaining why.]"
 
-Do not include code snippets, prompt text, or config examples. Describe everything in plain English. Stay in your lane — only flag LLM pipeline quality issues. Do not flag general backend concerns (Collina's domain) or security issues beyond prompt injection (Hunt's domain).
+Do not include code snippets, prompt text, or config examples. Describe everything in plain English. Stay in your lane — only flag LLM pipeline quality issues. Do not flag general backend concerns (Backend/Python Expert's domain) or security issues beyond prompt injection (Hunt's domain).
 
 IMPORTANT — OUTPUT INSTRUCTIONS:
 1. Write your complete findings to .council/review-output/$TIMESTAMP/willison.md
@@ -553,10 +548,10 @@ Do NOT return your full findings to the parent. The file is your deliverable.
 Before synthesising, read ALL ten output files:
 
 1. `.council/review-output/$TIMESTAMP/hunt.md`
-2. `.council/review-output/$TIMESTAMP/dodds.md`
-3. `.council/review-output/$TIMESTAMP/collina.md`
+2. `.council/review-output/$TIMESTAMP/telegram-ux.md`
+3. `.council/review-output/$TIMESTAMP/backend-python.md`
 4. `.council/review-output/$TIMESTAMP/leach.md`
-5. `.council/review-output/$TIMESTAMP/vercel.md`
+5. `.council/review-output/$TIMESTAMP/docker-deploy.md`
 6. `.council/review-output/$TIMESTAMP/saarinen.md`
 7. `.council/review-output/$TIMESTAMP/friedman.md`
 8. `.council/review-output/$TIMESTAMP/beck.md`
@@ -571,13 +566,12 @@ Once all ten output files are confirmed present and complete:
 
 1. **Collect all findings** from all ten files.
 2. **Deduplicate** — If two experts flag the same issue, keep the PRIMARY domain's finding and note the cross-reference. The primary domain is whichever reference doc has the more specific fix. Specific overlap rules:
-   - **Saarinen vs Dodds:** Saarinen takes priority for visual/design concerns (hierarchy, spacing, typography). Dodds takes priority for architectural concerns (component structure, state management, rendering patterns).
-   - **Friedman vs Dodds:** Friedman takes priority for UX flow concerns (screen states, progressive disclosure, error recovery). Dodds takes priority for implementation quality (hook patterns, effect management, accessibility attributes).
+   - **Saarinen vs Telegram UX Expert:** Saarinen takes priority for message visual design (formatting, information density). Telegram UX Expert takes priority for conversation flow architecture and inline keyboard design.
+   - **Friedman vs Telegram UX Expert:** Friedman takes priority for interaction patterns and screen state design. Telegram UX Expert takes priority for bot-specific conversation structure and callback handling.
    - **Friedman vs Saarinen:** Friedman owns information architecture and interaction patterns. Saarinen owns visual execution of those patterns. Keep both if they describe genuinely different problems.
-   - **Fowler vs Collina:** Fowler takes priority for module boundary and abstraction concerns. Collina takes priority for async correctness, error handling, and tRPC procedure design. If both flag the same file, Fowler owns the structural argument and Collina owns the runtime behaviour argument.
-   - **Fowler vs Dodds:** Fowler takes priority for cross-module structural concerns (coupling, cohesion, dependency direction). Dodds takes priority for component-level architecture (state management, hook patterns, rendering strategy).
+   - **Fowler vs Backend/Python Expert:** Fowler takes priority for module boundary and abstraction concerns. Backend/Python Expert takes priority for async correctness, error handling, and FastAPI endpoint design. If both flag the same file, Fowler owns the structural argument and Backend Expert owns the runtime behaviour argument.
    - **Willison vs Hunt:** Willison takes priority for LLM-specific injection risks (prompt injection, jailbreak). Hunt takes priority for general application security (auth, CSRF, XSS). If both flag prompt injection, Willison owns it — he has the more specific fix.
-   - **Willison vs Collina:** Willison takes priority for LLM API call patterns (streaming, retries, token management). Collina takes priority for general async/error handling. If both flag error handling on a model call, Willison owns the domain-specific argument.
+   - **Willison vs Backend/Python Expert:** Willison takes priority for LLM API call patterns (streaming, retries, token management). Backend Expert takes priority for general async/error handling. If both flag error handling on a model call, Willison owns the domain-specific argument.
    - **Beck vs all others:** Beck reviews test quality only. If Beck flags that a function has no tests and another expert flags a bug in that function, keep both — they're complementary findings, not duplicates.
 3. **Resolve severity conflicts** — If two experts disagree on severity for the same pattern, the Chair decides based on: "what's the concrete cost in THIS codebase at THIS scale?"
 4. **Apply the Carmack filter** to every finding:
@@ -670,10 +664,10 @@ Use this exact format. Structure and attribution are non-negotiable — every fi
 | Expert | P1 | P2 | P3 | Total | Key Areas |
 |--------|----|----|----|----|-----------|
 | Hunt (Security) | [N] | [N] | [N] | [N] | [1-2 words per main area, comma-separated] |
-| Dodds (Frontend) | [N] | [N] | [N] | [N] | [1-2 words per main area] |
-| Collina (Backend) | [N] | [N] | [N] | [N] | [1-2 words per main area] |
-| Leach (Postgres) | [N] | [N] | [N] | [N] | [1-2 words per main area] |
-| Vercel (Performance) | [N] | [N] | [N] | [N] | [1-2 words per main area] |
+| Telegram UX Expert | [N] | [N] | [N] | [N] | [1-2 words per main area] |
+| Backend/Python Expert | [N] | [N] | [N] | [N] | [1-2 words per main area] |
+| Leach (Database) | [N] | [N] | [N] | [N] | [1-2 words per main area] |
+| Docker/Deploy Expert | [N] | [N] | [N] | [N] | [1-2 words per main area] |
 | Saarinen (UI Quality) | [N] | [N] | [N] | [N] | [1-2 words per main area] |
 | Friedman (UX Quality) | [N] | [N] | [N] | [N] | [1-2 words per main area] |
 | Fowler (Refactoring) | [N] | [N] | [N] | [N] | [1-2 words per main area] |
@@ -685,10 +679,10 @@ Use this exact format. Structure and attribution are non-negotiable — every fi
 
 **Expert output files:**
 - Hunt: `.council/review-output/$TIMESTAMP/hunt.md`
-- Dodds: `.council/review-output/$TIMESTAMP/dodds.md`
-- Collina: `.council/review-output/$TIMESTAMP/collina.md`
+- Telegram UX: `.council/review-output/$TIMESTAMP/telegram-ux.md`
+- Backend/Python: `.council/review-output/$TIMESTAMP/backend-python.md`
 - Leach: `.council/review-output/$TIMESTAMP/leach.md`
-- Vercel: `.council/review-output/$TIMESTAMP/vercel.md`
+- Docker/Deploy: `.council/review-output/$TIMESTAMP/docker-deploy.md`
 - Saarinen: `.council/review-output/$TIMESTAMP/saarinen.md`
 - Friedman: `.council/review-output/$TIMESTAMP/friedman.md`
 - Beck: `.council/review-output/$TIMESTAMP/beck.md`
@@ -767,9 +761,9 @@ Examples:
 **Type B — Adopted Fixes:** P1/P2 findings that the user accepts and that establish a new pattern going forward. These become "always do this" conventions.
 
 Examples:
-- "All tRPC mutations that modify records must verify ownership before update"
-- "CSS Modules files must use the `component__element--modifier` BEM pattern, no shortcuts"
-- "Prisma transactions must use interactive transactions (`$transaction(async (tx) => ...)`) not sequential"
+- "All FastAPI mutation endpoints must verify resource ownership before update"
+- "All Pydantic models must use `ConfigDict(strict=True)` for ID and amount fields"
+- "SQLAlchemy sessions must use `async with session.begin()` for transactions, not manual commit"
 
 ### Step 2: Present candidates to the user
 

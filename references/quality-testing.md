@@ -1,7 +1,7 @@
 # Test Quality Reference — Carmack × Beck
 
 Philosophy: John Carmack. Testing expertise: Kent Beck (creator of TDD, co-creator of JUnit, author of Test Desiderata).
-Stack context: Next.js App Router / React / TypeScript / tRPC / Prisma / Neon (serverless Postgres) / Clerk / CSS Modules + BEM. Vitest for unit/integration tests. Cypress for E2E. LLM pipelines with non-deterministic output.
+Stack context: Python 3.11+ / FastAPI / python-telegram-bot / SQLAlchemy async / SQLite / Firestore / Pydantic v2. pytest + pytest-asyncio for unit/integration tests. httpx for FastAPI test client. LLM pipelines with non-deterministic output.
 
 Every finding must describe the **concrete consequence** — not just "this test is bad."
 This doc covers: test quality auditing, test specification, mock discipline, behavioral coverage, and the specific failure modes of AI-generated tests. It powers two skill modes: **audit** (evaluate existing tests) and **specify** (write test specifications for new code).

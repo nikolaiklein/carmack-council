@@ -1,6 +1,6 @@
 ---
 name: test-architect
-description: Map testable surfaces, audit existing tests for quality, and write test specifications that prevent AI shortcuts. Use when asked to "audit tests", "specify tests", "test architect", "map test coverage", or invoke /test-architect. Two modes — audit (evaluate existing tests against Beck's principles) and specify (write test specs for new code). Powered by Carmack × Beck quality-testing.md reference doc. Stack: Next.js App Router / TypeScript / Vitest / Cypress / tRPC / Prisma / Neon.
+description: Map testable surfaces, audit existing tests for quality, and write test specifications that prevent AI shortcuts. Use when asked to "audit tests", "specify tests", "test architect", "map test coverage", or invoke /test-architect. Two modes — audit (evaluate existing tests against Beck's principles) and specify (write test specs for new code). Powered by Carmack × Beck quality-testing.md reference doc. Stack: Python 3.11+ / FastAPI / python-telegram-bot / SQLAlchemy / SQLite / Pydantic v2 / pytest.
 ---
 
 # Test Architect — Carmack × Beck
@@ -19,12 +19,13 @@ You operate in three modes:
 
 ## Stack Context
 
-- **Vitest** — unit and integration tests. Config in `vitest.config.ts`.
-- **Cypress** — E2E tests. Config in `cypress.config.ts`.
-- **tRPC** — the primary API boundary. tRPC procedures are the most important testable surface.
-- **Prisma** — ORM on Neon serverless Postgres. Prefer test database over mocked Prisma client.
-- **Next.js App Router** — Server Components, Server Actions, route handlers.
-- **LLM pipelines** — chained AI calls via OpenRouter. Non-deterministic output. Prompt construction and response parsing are deterministic and testable in isolation.
+- **pytest + pytest-asyncio** — unit and integration tests. Config in `pyproject.toml` or `conftest.py`.
+- **httpx** — async test client for FastAPI endpoints.
+- **FastAPI** — the primary API boundary. FastAPI endpoints and dependency injection are the most important testable surface.
+- **SQLAlchemy async** — ORM on SQLite/Firestore. Prefer test database over mocked sessions.
+- **python-telegram-bot** — Telegram bot handlers, inline keyboards, conversation flows.
+- **Pydantic v2** — data validation and serialization. Models are testable in isolation.
+- **LLM pipelines** — chained AI calls via Gemini/LiteLLM. Non-deterministic output. Prompt construction and response parsing are deterministic and testable in isolation.
 
 ## Test Layers
 
@@ -32,11 +33,11 @@ Every feature has behavior distributed across multiple layers. Covering only one
 
 | Layer | Tool | What it tests | When to use |
 |---|---|---|---|
-| **Integration** | Vitest (node) | tRPC procedures, database behavior, business logic, authorization | Any backend behavior: data flows, mutations, queries, auth boundaries, computed results |
-| **Component** | Vitest (jsdom) | UI rendering, user interactions, keyboard handling, conditional display, state transitions | Any behavior the user sees: layouts, navigation, badges, empty states, form validation, keyboard shortcuts |
-| **E2E** | Cypress | Full user flows across pages | Critical paths: auth → create → navigate → interact → verify |
+| **Unit** | pytest | Pydantic models, utility functions, prompt construction, response parsers, business logic | Pure functions, data validation, deterministic transformations |
+| **Integration** | pytest + httpx (AsyncClient) | FastAPI endpoints, database behavior, SQLAlchemy queries, auth, Telegram handler logic | Any backend behavior: API flows, mutations, queries, auth boundaries, bot command handling |
+| **E2E** | pytest + real DB + mocked external APIs | Full user flows: Telegram command → handler → DB → response | Critical paths: /start → configure → interact → verify state |
 
-**The default failure mode of AI test generation is covering only the integration layer and declaring the job done.** This is the equivalent of testing only the database and claiming the feature works. If a spec describes UI behavior (keyboard shortcuts, split-pane layouts, badges, empty states, navigation, breadcrumbs), those behaviors MUST have component tests. If a spec describes multi-step user flows, those MUST have E2E tests.
+**The default failure mode of AI test generation is covering only unit tests and declaring the job done.** This is the equivalent of testing only Pydantic models and claiming the feature works. If a spec describes Telegram bot behavior (inline keyboards, conversation flows, callback queries), those behaviors MUST have integration tests with handler logic. If a spec describes multi-step user flows, those MUST have E2E tests.
 
 ---
 
@@ -48,12 +49,12 @@ Every feature has behavior distributed across multiple layers. Covering only one
 
 ### Phase 1: Map the surface
 
-1. **Glob source and test files.** Build a map of source files to their corresponding test files. Use naming conventions (`foo.ts` → `foo.test.ts`, `foo.spec.ts`) and import analysis.
+1. **Glob source and test files.** Build a map of source files to their corresponding test files. Use naming conventions (`foo.py` → `test_foo.py`, `tests/test_foo.py`) and import analysis.
 2. **Identify untested source files.** Source files with no corresponding test file. Not all need tests — but the absence should be noted.
 3. **Classify source files by risk.** Apply Beck's Principle 4 (test what might break):
-   - **High risk**: tRPC procedures with mutations, auth middleware, payment/billing, data pipeline steps, LLM orchestration, webhook handlers. These MUST have tests.
-   - **Medium risk**: tRPC queries, data transformation utilities, complex business logic, validation functions. These SHOULD have tests.
-   - **Low risk**: simple type exports, config constants, straightforward delegation with no conditional logic, UI layout components. These MAY have tests.
+   - **High risk**: FastAPI endpoints with mutations, auth middleware, payment/billing, data pipeline steps, LLM orchestration, Telegram command handlers, webhook handlers. These MUST have tests.
+   - **Medium risk**: FastAPI query endpoints, data transformation utilities, complex business logic, Pydantic validators, SQLAlchemy queries. These SHOULD have tests.
+   - **Low risk**: simple type aliases, config constants, straightforward delegation with no conditional logic, Pydantic models with no custom validators. These MAY have tests.
 4. **Write the surface map** to `.test-architect/audit-$TIMESTAMP/surface-map.md`.
 
 ### Phase 2: Audit test files
@@ -62,11 +63,11 @@ Read each test file in scope. For every test file, evaluate against the Beck pri
 
 **P1 checks — false confidence:**
 
-1. **Assertion-free tests** (Principle 6) — tests with no assertions, or only trivial assertions (`.toBeDefined()`, `.toBeTruthy()`, no-throw-implicit-pass). Count them.
+1. **Assertion-free tests** (Principle 6) — tests with no assertions, or only trivial assertions (`assert result is not None`, `assert result`, no-throw-implicit-pass). Count them.
 
 2. **Happy path missing** (Principle 5) — all tests are error/edge cases. No test configures dependencies for success and asserts on the full success output. This is the signature LLM anti-pattern.
 
-3. **Mock theatre** (Principle 3) — every dependency mocked, assertions verify mock interactions ("expect(mockFn).toHaveBeenCalledWith(...)") rather than behavioral outcomes. Count mocks per test. Flag when mock count exceeds 3.
+3. **Mock theatre** (Principle 3) — every dependency mocked, assertions verify mock interactions (`mock_fn.assert_called_with(...)`) rather than behavioral outcomes. Count mocks per test. Flag when mock count exceeds 3.
 
 4. **Tautological assertions** (Principle 1) — expected values that appear derived from the implementation rather than independently specified. Expected values containing internal IDs, precise timestamps, or implementation-specific serialization artifacts.
 
@@ -82,7 +83,7 @@ Read each test file in scope. For every test file, evaluate against the Beck pri
 
 9. **Non-determinism tolerated** (Principle 8) — tests with retry logic, widened tolerances, or flaky behavior. Deterministic components tested through non-deterministic integration paths.
 
-10. **Weakened assertions** (Principle 10) — evidence that assertions were broadened, deleted, or commented out. Accumulation of `.skip` or `.todo` annotations.
+10. **Weakened assertions** (Principle 10) — evidence that assertions were broadened, deleted, or commented out. Accumulation of `@pytest.mark.skip` or `pytest.skip()` annotations.
 
 **P3 checks — maintenance and design signals:**
 
@@ -110,8 +111,8 @@ Write findings to `.test-architect/audit-$TIMESTAMP/findings.md`. Use this forma
 
 | | |
 |---|---|
-| **Test file** | `path/to/file.test.ts` |
-| **Source file** | `path/to/file.ts` |
+| **Test file** | `tests/test_file.py` |
+| **Source file** | `src/file.py` |
 | **Principle** | Principle N — [name] from quality-testing.md |
 
 **Finding:** [1-2 sentences. What's wrong with this test.]
@@ -180,9 +181,10 @@ After writing findings, present a summary table to the user. Do NOT just say "au
 4. **If spec**: read the acceptance criteria. These are your primary test targets.
 5. **Identify the dependency graph** — what does this code depend on? Classify each dependency:
    - **Internal** (own code) — use real implementation in tests
-   - **Database** (Prisma/Neon) — use test database with seed data
+   - **Database** (SQLAlchemy/SQLite/Firestore) — use test database with seed data
    - **External API** (third-party service) — mock at the boundary
-   - **LLM provider** (OpenRouter, Gemini) — inject canned responses as fixtures
+   - **LLM provider** (Gemini, LiteLLM) — inject canned responses as fixtures
+   - **Telegram API** (python-telegram-bot) — mock Bot/Update objects
    - **Non-deterministic** (clock, random, LLM output) — inject via parameter
 
 ### Phase 1.5: Extract and assign every acceptance criterion
@@ -234,9 +236,9 @@ Write the test spec to `.test-architect/specs/[feature-name]-tests.md`. Use this
 ## Test Setup
 
 [Describe what the test environment needs. Be specific:]
-- Database: [seed data required, or "no database"]
-- Fixtures: [canned LLM responses, sample data files, etc.]
-- Mocks: [ONLY external system boundary mocks — list each one and what it should return for success AND failure cases]
+- Database: [seed data required via conftest.py fixtures, or "no database"]
+- Fixtures: [canned LLM responses, sample Telegram Update objects, etc.]
+- Mocks: [ONLY external system boundary mocks (Telegram Bot API, LLM providers) — list each one and what it should return for success AND failure cases]
 
 MOCK BUDGET: [N] mocks maximum. If more are needed, the code should be refactored.
 
@@ -299,7 +301,7 @@ Every Gherkin scenario from the source spec must appear here with at least one t
 The implementing agent MUST NOT:
 - Modify any expected value listed above
 - Remove or comment out any assertion
-- Add `.skip`, `.todo`, or `.xit` to any test
+- Add `@pytest.mark.skip`, `pytest.skip()`, or comment out any test
 - Mock internal modules — only external boundaries listed in Test Setup
 - Create tests that pass with `return null` or `return {}` in the function body
 
@@ -326,9 +328,9 @@ Present the test specification in conversation with the completeness summary. **
 
 | Layer | Count | File |
 |---|---|---|
-| Integration | [N] | `__tests__/integration/[name].test.ts` |
-| Component | [N] | `__tests__/components/[name].test.tsx` |
-| E2E | [N] | `cypress/e2e/[name].cy.ts` |
+| Integration | [N] | `tests/test_[name].py` |
+| Component | [N] | `tests/test_[name]_handlers.py` |
+| E2E | [N] | `tests/e2e/test_[name]_e2e.py` |
 | **Total** | **[N]** | |
 
 **Mock budget:** [N] mocks (integration: [N], component: [N])
@@ -400,7 +402,7 @@ When writing findings or specifications, reference principles by number:
 2. **Match existing patterns** — use the same test utilities, mock patterns, and conventions already established in the codebase. Read neighboring test files for style.
 3. **Happy path first** — if the test file is missing a happy path, that's the first thing to add.
 4. **Kill assertion-free tests** — if a test has no meaningful assertions, either add real assertions or delete it. A test that only proves "didn't crash" should say so in its name or be removed.
-5. **Don't over-mock** — if a test requires more than 3 mocks, consider whether you're testing the right thing. But respect existing mock patterns for external boundaries (tRPC, Clerk, next/navigation).
+5. **Don't over-mock** — if a test requires more than 3 mocks, consider whether you're testing the right thing. But respect existing mock patterns for external boundaries (Telegram Bot API, LiteLLM, external services).
 6. **Run tests after fixing** — always verify the fixed tests pass before presenting results.
 7. **Pre-existing theatre counts** — if you encounter test theatre while working on a feature, fix it. Don't leave it because "it was already there."
 

@@ -6,14 +6,17 @@ The Carmack Council skills are opinionated for the stack below. If you use a dif
 
 | Layer | Technology | Alternative examples |
 |-------|-----------|---------------------|
-| Framework | Next.js App Router | Remix, SvelteKit, Nuxt |
-| Language | TypeScript (strict mode) | — |
-| API layer | tRPC | REST, GraphQL |
-| ORM | Prisma | Drizzle, Kysely, TypeORM |
-| Database | Neon (serverless Postgres) | Supabase, PlanetScale, RDS |
-| Auth | Clerk | NextAuth, Lucia, Auth0 |
-| Styling | CSS Modules + BEM | Tailwind, styled-components, vanilla-extract |
-| Deployment | Railway (long-lived containers) | Vercel, Fly.io, AWS |
+| Language | Python 3.11+ (type hints, async/await) | — |
+| HTTP framework | FastAPI | Flask, Starlette, Litestar |
+| Bot framework | python-telegram-bot | aiogram, Telethon |
+| Validation | Pydantic v2 | attrs, msgspec |
+| ORM | SQLAlchemy async | Tortoise ORM, raw SQL |
+| Database | SQLite / Firestore | Postgres, MongoDB |
+| Auth | Custom (Telegram user ID based) | — |
+| UI layer | Telegram inline keyboards / conversation UX | — |
+| Deployment | Docker, Google Cloud Run, Railway | Fly.io, AWS |
+| AI layer | Gemini via LiteLLM (http://89.167.90.181:4000) | direct API calls |
+| Testing | pytest, pytest-asyncio, httpx | unittest |
 
 ---
 
@@ -25,9 +28,9 @@ Every SKILL.md has a "Stack Context" section near the top. This is the primary p
 
 | File | What to change |
 |------|---------------|
-| `skills/council-review/SKILL.md` | Stack Context section (lines ~12–26). Update framework, API layer, ORM, DB, auth, styling, deployment target. |
-| `skills/council-plan/SKILL.md` | Stack Context section (lines ~12–23). Same stack list. |
-| `skills/council-implement/SKILL.md` | Stack Context section (lines ~12–23). Same stack list. |
+| `skills/council-review/SKILL.md` | Stack Context section. Update framework, API layer, ORM, DB, auth, UI, deployment target. |
+| `skills/council-plan/SKILL.md` | Stack Context section. Same stack list. |
+| `skills/council-implement/SKILL.md` | Stack Context section. Same stack list. |
 | `skills/spec-writer/SKILL.md` | No stack context section — spec-writer is stack-agnostic by design. |
 
 ### SKILL.md files — Subagent prompts
@@ -36,13 +39,11 @@ The council-review and council-plan SKILL.md files contain subagent prompt templ
 
 | Pattern | Where it appears | What to change |
 |---------|-----------------|---------------|
-| "tRPC" / "No REST routes" | council-review subagent prompts (Collina, Dodds, Leach), council-plan subagent prompts | Replace with your API layer |
-| "Prisma" / "Neon" | council-review subagent prompts (Leach, Collina), council-plan subagent prompts | Replace with your ORM/DB |
-| "CSS Modules + BEM" / "never suggest Tailwind" | council-review subagent prompts (Dodds, Saarinen), council-plan subagent prompts | Replace with your styling approach |
-| "Clerk" | council-review and council-plan Stack Context | Replace with your auth provider |
-| "Server Components" / "Server Actions" | council-review and council-plan subagent prompts | Remove if not using RSC-based framework |
-| "Railway" / "NOT Vercel serverless" | council-review Stack Context | Replace with your deployment target; if serverless, re-enable the `waitUntil()` and lifetime warnings |
-| `~/.claude/skills/react-best-practices/rules/` | council-review Vercel subagent, council-plan Vercel subagent, council-implement reference table | This is a third-party skill. Replace with your own performance reference doc, or remove the Vercel subagent |
+| "FastAPI routers" | council-review subagent prompts (Backend, Telegram UX), council-plan subagent prompts | Replace with your API layer |
+| "SQLAlchemy" / "SQLite" / "Firestore" | council-review subagent prompts (Leach, Backend), council-plan subagent prompts | Replace with your ORM/DB |
+| "Telegram inline keyboards" | council-review subagent prompts (Telegram UX Expert), council-plan subagent prompts | Replace with your UI approach |
+| "Telegram user ID based" auth | council-review and council-plan Stack Context | Replace with your auth provider |
+| "Docker" / "Cloud Run" | council-review Stack Context, council-plan Docker/Deploy subagent | Replace with your deployment target |
 | `skills/ui-architect/SKILL.md` | council-review Saarinen subagent, council-plan Saarinen subagent | Optional read — remove if you don't have this skill |
 | `skills/ux-architect/SKILL.md` | council-review Friedman subagent, council-plan Friedman subagent | Optional read — remove if you don't have this skill |
 | `skills/test-architect/SKILL.md` | council-review Beck subagent | Optional read — remove if you don't have this skill |
@@ -53,15 +54,15 @@ The reference docs contain stack-specific patterns and examples throughout. Thes
 
 | Reference | Stack assumptions | What to change |
 |-----------|-----------------|---------------|
-| `references/security.md` | Clerk auth, tRPC middleware, Next.js middleware, Prisma queries | Replace with your auth/API/ORM security patterns |
-| `references/quality-backend.md` | tRPC procedures, Next.js Server Actions, Prisma client, Railway deployment | Replace with your API layer, ORM, and deployment patterns |
-| `references/quality-frontend.md` | React, Next.js App Router, Server/Client Components, CSS Modules + BEM | Replace with your frontend framework and styling approach |
-| `references/quality-postgres.md` | Prisma ORM, Neon serverless Postgres, PgBouncer | Replace with your ORM and Postgres provider. Core Postgres principles (schema design, migrations, transactions) are universal |
-| `references/quality-testing.md` | Vitest, Cypress, tRPC test utilities | Replace with your test framework and tooling |
-| `references/quality-llm.md` | General LLM pipeline principles — largely stack-agnostic | — |
-| `references/quality-ui.md` | CSS Modules + BEM, dark theme, Inter + JetBrains Mono fonts, Linear-inspired aesthetic | Replace with your design system, theme, fonts, and aesthetic |
-| `references/quality-ux.md` | Data-dense analytical interface patterns | Adjust for your product type and user context |
-| `references/refactoring.md` | tRPC, Prisma, Next.js patterns | Replace with your stack's refactoring patterns. Core refactoring principles are universal |
+| `references/security.md` | Telegram user ID auth, FastAPI middleware, SQLAlchemy queries | Replace with your auth/API/ORM security patterns |
+| `references/quality-backend.md` | FastAPI endpoints, Pydantic models, python-telegram-bot handlers, asyncio patterns | Replace with your API layer, ORM, and deployment patterns |
+| `references/quality-frontend.md` | N/A — no frontend framework. UI is Telegram inline keyboards and conversation UX | Adjust for your UI approach |
+| `references/quality-postgres.md` | SQLAlchemy async, SQLite/Firestore | Replace with your ORM and DB provider. Core DB principles are universal |
+| `references/quality-testing.md` | pytest, pytest-asyncio, httpx for FastAPI test client | Replace with your test framework and tooling |
+| `references/quality-llm.md` | General LLM pipeline principles — largely stack-agnostic. Gemini via LiteLLM | — |
+| `references/quality-ui.md` | Telegram bot UX — inline keyboards, conversation flows, message formatting | Replace with your UI approach |
+| `references/quality-ux.md` | Bot conversation UX patterns | Adjust for your product type and user context |
+| `references/refactoring.md` | FastAPI, SQLAlchemy, python-telegram-bot patterns | Replace with your stack's refactoring patterns. Core refactoring principles are universal |
 
 ### Spec-writer references
 

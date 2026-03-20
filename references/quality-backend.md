@@ -1,10 +1,43 @@
-# Backend Quality Reference — Carmack × Collina × tRPC
+# Backend Quality Reference — Carmack × Python Stack
 
-Philosophy: John Carmack. Runtime expertise: Matteo Collina (Fastify, Pino, Node.js TSC). Patterns: tRPC community + Next.js App Router.
-Stack context: Next.js App Router / React / TypeScript / tRPC / Prisma / Neon (serverless Postgres) / Clerk / CSS Modules + BEM.
+Philosophy: John Carmack. Stack expertise: FastAPI, Pydantic v2, python-telegram-bot, asyncio.
+Stack context: Python 3.11+ / FastAPI / python-telegram-bot / SQLAlchemy async / SQLite / Firestore / Pydantic v2 / Docker + Cloud Run.
 
 Every finding must describe the **concrete failure mode** — not just "this is bad practice."
-Security patterns are in security.md (Hunt). Performance is in the Vercel skill. Prisma/Neon/Postgres depth is in quality-postgres.md (Brandur). This doc covers: async correctness, error handling discipline, tRPC procedure design, and Next.js backend patterns.
+Security patterns are in security.md (Hunt). Database depth is in quality-postgres.md (Brandur). This doc covers: async correctness, error handling discipline, FastAPI endpoint design, Pydantic model patterns, and python-telegram-bot handler architecture.
+
+---
+
+## Python Stack Patterns
+
+### FastAPI async endpoints
+- All I/O-bound endpoints must be `async def`, not `def`. Using `def` in FastAPI runs the handler in a threadpool, adding overhead and hiding the true concurrency model.
+- Use `Depends()` for dependency injection: database sessions, auth checks, config. Never instantiate dependencies inside handler bodies.
+- Return Pydantic models from endpoints — FastAPI serializes them automatically. Don't manually call `.dict()` or `.model_dump()`.
+- Use `HTTPException` for all error responses. Don't return raw dicts with status codes.
+
+### Pydantic v2 models
+- Use `model_validator` and `field_validator` for complex validation, not manual checks in handlers.
+- Prefer `BaseModel` subclasses for request/response schemas. Use `Field(...)` with descriptions for OpenAPI docs.
+- Use `ConfigDict(strict=True)` where type coercion is dangerous (IDs, amounts).
+- Separate input models (create/update) from output models (response) — don't reuse the same model for both.
+
+### SQLAlchemy async patterns
+- Use `async_sessionmaker` and `AsyncSession`. Never use synchronous `Session` in async code.
+- Always use `async with session.begin()` for transactions — ensures commit/rollback.
+- Use `select()` statements, not legacy `session.query()` — the 2.0 style is required for async.
+- Close sessions explicitly or use dependency injection with `yield` in FastAPI.
+
+### Error handling with HTTPException
+- Map domain errors to HTTP status codes explicitly: `404` for not found, `409` for conflicts, `422` for validation, `403` for forbidden.
+- Never expose internal error details (stack traces, SQL errors) in HTTP responses.
+- Use custom exception handlers for common error types rather than try/except in every handler.
+
+### FastAPI dependency injection
+- Database sessions via `Depends(get_db)` — yields session, ensures cleanup.
+- Auth via `Depends(get_current_user)` — validates token/session before handler runs.
+- Config via `Depends(get_settings)` — cached with `@lru_cache`.
+- Chain dependencies: `get_current_user` depends on `get_db`, FastAPI resolves the graph.
 
 ---
 
